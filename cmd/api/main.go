@@ -3,10 +3,9 @@ package main
 import (
 	"context"
 	"log"
+	"vigia-verde-go/internal/core/config"
 
 	firebase "firebase.google.com/go/v4"
-
-	"vigia-verde-go/internal/core/config"
 )
 
 func main() {
