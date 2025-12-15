@@ -20,10 +20,7 @@ func parseEnvLine(line string) (key, value string, ok bool) {
 	}
 
 	key = strings.TrimSpace(parts[0])
-	value = strings.TrimSpace(parts[1])
-
-	// Remove aspas simples/duplas se estiverem presentes nas extremidades
-	value = strings.Trim(value, `"'`)
+	value = strings.Trim(strings.TrimSpace(parts[1]), `"'`)
 
 	return key, value, true
 }
@@ -41,7 +38,7 @@ func loadEnvVarsFromReader(r io.Reader) (map[string]string, error) {
 	}
 
 	if err := scanner.Err(); err != nil {
-		return nil, fmt.Errorf("Error reading content from .env: %w", err)
+		return nil, fmt.Errorf("error reading content from .env: %w", err)
 	}
 
 	return envMap, nil
@@ -50,14 +47,13 @@ func loadEnvVarsFromReader(r io.Reader) (map[string]string, error) {
 func loadEnvVarsFromFile(path string) (map[string]string, error) {
 	f, err := os.Open(path)
 	if err != nil {
-		return nil, fmt.Errorf("Error opening .env file (%s): %w", path, err)
+		return nil, fmt.Errorf("error opening .env file (%s): %w", path, err)
 	}
 	defer f.Close()
 
 	return loadEnvVarsFromReader(f)
 }
 
-// LoadEnv carrega as variáveis do arquivo e aplica no ambiente do processo.
 func LoadEnv(path string) error {
 	envVars, err := loadEnvVarsFromFile(path)
 	if err != nil {
@@ -66,7 +62,7 @@ func LoadEnv(path string) error {
 
 	for key, value := range envVars {
 		if err := os.Setenv(key, value); err != nil {
-			return fmt.Errorf("Error setting variable %q: %w", key, err)
+			return fmt.Errorf("error setting variable %q: %w", key, err)
 		}
 	}
 
