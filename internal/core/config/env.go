@@ -3,47 +3,71 @@ package config
 import (
 	"bufio"
 	"fmt"
+	"io"
 	"os"
 	"strings"
 )
 
-// LoadEnv lê um arquivo .env e coloca cada variável no ambiente do processo
-// usando os.Setenv(KEY, VALUE).
-func LoadEnv(path string) error {
-	file, err := os.Open(path)
-	if err != nil {
-		return fmt.Errorf("erro abrindo arquivo .env (%s): %w", path, err)
-	}
-	defer file.Close()
+func parseEnvLine(line string) (key, value string, ok bool) {
+	line = strings.TrimSpace(line)
 
-	scanner := bufio.NewScanner(file)
+	if line == "" || strings.HasPrefix(line, "#") {
+		return "", "", false
+	}
+	parts := strings.SplitN(line, "=", 2)
+	if len(parts) != 2 {
+		return "", "", false
+	}
+
+	key = strings.TrimSpace(parts[0])
+	value = strings.TrimSpace(parts[1])
+
+	// Remove aspas simples/duplas se estiverem presentes nas extremidades
+	value = strings.Trim(value, `"'`)
+
+	return key, value, true
+}
+
+func loadEnvVarsFromReader(r io.Reader) (map[string]string, error) {
+	envMap := make(map[string]string)
+
+	scanner := bufio.NewScanner(r)
 
 	for scanner.Scan() {
-		line := strings.TrimSpace(scanner.Text())
-
-		// Ignora linha vazia ou comentário
-		if line == "" || strings.HasPrefix(line, "#") {
-			continue
+		key, value, ok := parseEnvLine(scanner.Text())
+		if ok {
+			envMap[key] = value
 		}
-
-		// Formato esperado: CHAVE=VALOR
-		parts := strings.SplitN(line, "=", 2)
-		if len(parts) != 2 {
-			// Linha mal formatada, ignora ou loga se quiser
-			continue
-		}
-
-		key := strings.TrimSpace(parts[0])
-		value := strings.TrimSpace(parts[1])
-
-		// Remove aspas se estiverem presentes
-		value = strings.Trim(value, `"'`)
-
-		os.Setenv(key, value)
 	}
 
 	if err := scanner.Err(); err != nil {
-		return fmt.Errorf("erro lendo arquivo .env: %w", err)
+		return nil, fmt.Errorf("Error reading content from .env: %w", err)
+	}
+
+	return envMap, nil
+}
+
+func loadEnvVarsFromFile(path string) (map[string]string, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return nil, fmt.Errorf("Error opening .env file (%s): %w", path, err)
+	}
+	defer f.Close()
+
+	return loadEnvVarsFromReader(f)
+}
+
+// LoadEnv carrega as variáveis do arquivo e aplica no ambiente do processo.
+func LoadEnv(path string) error {
+	envVars, err := loadEnvVarsFromFile(path)
+	if err != nil {
+		return err
+	}
+
+	for key, value := range envVars {
+		if err := os.Setenv(key, value); err != nil {
+			return fmt.Errorf("Error setting variable %q: %w", key, err)
+		}
 	}
 
 	return nil

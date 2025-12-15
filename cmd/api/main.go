@@ -4,32 +4,18 @@ import (
 	"context"
 	"log"
 	"vigia-verde-go/internal/core/config"
-
-	firebase "firebase.google.com/go/v4"
+	platform "vigia-verde-go/internal/platform"
 )
 
 func main() {
-	// 1) Carrega .env (ajuste o caminho dependendo de onde você roda o go run)
-	if err := config.LoadEnv("../../.env"); err != nil {
-		log.Fatalf("erro ao carregar .env: %v", err)
-	}
+	config.LoadEnv("../../.env")
 
-	// 2) Cria contexto base
 	ctx := context.Background()
-
-	// 3) Inicializa Firebase App
-	app, err := firebase.NewApp(ctx, nil)
+	_, cleanup, err := platform.SetupDatabaseConnection(ctx)
 	if err != nil {
-		log.Fatalf("erro ao inicializar Firebase App: %v", err)
+		log.Fatalf("%v", err)
+		return
 	}
 
-	// 4) Cria Firestore client
-	fsClient, err := app.Firestore(ctx)
-	if err != nil {
-		log.Fatalf("erro ao criar Firestore client: %v", err)
-	}
-	defer fsClient.Close()
-
-	log.Println("Conectado ao Firestore com sucesso! ✅")
-
+	defer cleanup()
 }
