@@ -1,17 +1,79 @@
 package treeevent
 
-// GeoLocation representa o campo "location" com latitude/longitude.
-// Mais pra frente, isso vai ser preenchido a partir do JSON do POST.
+import "errors"
+
+var (
+	ErrInvalidTitle     = errors.New("invalid title")
+	ErrInvalidEventType = errors.New("invalid eventType")
+	ErrInvalidGeoPoint  = errors.New("invalid location")
+)
+
 type GeoPoint struct {
-	Latitude  float64 `json:"latitude"`
-	Longitude float64 `json:"longitude"`
+	Latitude  float64
+	Longitude float64
 }
 
-// CreateTreeEventInput representa os dados necessários
-// para criar um treeEvent no Firestore.
-type CreateTreeEventInput struct {
-	Location  GeoPoint `json:"location"`
-	EventType string   `json:"eventType"`
-	Title     string   `json:"title"`
-	AuthorID  string   `json:"authorId"`
+func (p GeoPoint) Validate() error {
+	if p.Latitude < -90 || p.Latitude > 90 {
+		return ErrInvalidGeoPoint
+	}
+	if p.Longitude < -180 || p.Longitude > 180 {
+		return ErrInvalidGeoPoint
+	}
+	return nil
+}
+
+type EventType string
+
+const (
+	EventCut      EventType = "cut"
+	EventPruning  EventType = "pruning"
+	EventPlanting EventType = "planting"
+)
+
+func (t EventType) Validate() error {
+	switch t {
+	case EventCut, EventPruning, EventPlanting:
+		return nil
+	default:
+		return ErrInvalidEventType
+	}
+}
+
+type CreateInput struct {
+	Location  GeoPoint
+	EventType EventType
+	Title     string
+	AuthorID  string
+}
+
+type TreeEvent struct {
+	ID        string
+	Location  GeoPoint
+	EventType EventType
+	Title     string
+	AuthorID  string
+	Upvotes   int
+	Downvotes int
+}
+
+func New(in CreateInput) (TreeEvent, error) {
+	if in.Title == "" {
+		return TreeEvent{}, ErrInvalidTitle
+	}
+	if err := in.Location.Validate(); err != nil {
+		return TreeEvent{}, err
+	}
+	if err := in.EventType.Validate(); err != nil {
+		return TreeEvent{}, err
+	}
+
+	return TreeEvent{
+		Location:  in.Location,
+		EventType: in.EventType,
+		Title:     in.Title,
+		AuthorID:  in.AuthorID,
+		Upvotes:   0,
+		Downvotes: 0,
+	}, nil
 }

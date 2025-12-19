@@ -1,26 +1,30 @@
-package service
+package treeeventservice
 
 import (
 	"context"
 
 	treeevent "vigia-verde-go/internal/core"
-	"vigia-verde-go/internal/repository"
 )
 
-type TreeEventService interface {
-	CreateTreeEvent(ctx context.Context, input treeevent.CreateTreeEventInput) (string, error)
+type Repository interface {
+	Create(ctx context.Context, input treeevent.TreeEvent) (string, error)
 }
 
-type treeEventService struct {
-	repo repository.TreeEventRepository
+type TreeEventService struct {
+	repo Repository
 }
 
-func NewTreeEventService(repo repository.TreeEventRepository) TreeEventService {
-	return &treeEventService{
+func NewTreeEventService(repo Repository) *TreeEventService {
+	return &TreeEventService{
 		repo: repo,
 	}
 }
 
-func (s *treeEventService) CreateTreeEvent(ctx context.Context, input treeevent.CreateTreeEventInput) (string, error) {
-	return s.repo.Create(ctx, input)
+func (s *TreeEventService) CreateTreeEvent(ctx context.Context, input treeevent.CreateInput) (string, error) {
+	ev, err := treeevent.New(input)
+	if err != nil {
+		return "", err
+	}
+
+	return s.repo.Create(ctx, ev)
 }

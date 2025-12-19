@@ -8,7 +8,7 @@ import (
 	handlers "vigia-verde-go/internal/handlers"
 	platform "vigia-verde-go/internal/platform"
 	"vigia-verde-go/internal/repository"
-	"vigia-verde-go/internal/service"
+	service "vigia-verde-go/internal/service"
 )
 
 func main() {
