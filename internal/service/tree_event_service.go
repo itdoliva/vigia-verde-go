@@ -3,11 +3,11 @@ package treeeventservice
 import (
 	"context"
 
-	treeevent "vigia-verde-go/internal/core"
+	"vigia-verde-go/internal/core"
 )
 
 type Repository interface {
-	Create(ctx context.Context, input treeevent.TreeEvent) (string, error)
+	Create(ctx context.Context, input core.TreeEvent) (string, error)
 }
 
 type TreeEventService struct {
@@ -20,8 +20,8 @@ func NewTreeEventService(repo Repository) *TreeEventService {
 	}
 }
 
-func (s *TreeEventService) CreateTreeEvent(ctx context.Context, input treeevent.CreateInput) (string, error) {
-	ev, err := treeevent.New(input)
+func (s *TreeEventService) Create(ctx context.Context, input core.CreateInput) (string, error) {
+	ev, err := core.New(input)
 	if err != nil {
 		return "", err
 	}

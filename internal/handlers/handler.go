@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"net/http"
 
-	treeevent "vigia-verde-go/internal/core"
-	treeeventservice "vigia-verde-go/internal/service"
+	"vigia-verde-go/internal/core"
+	service "vigia-verde-go/internal/service"
 )
 
 type CreateTreeEventRequest struct {
@@ -19,10 +19,10 @@ type CreateTreeEventRequest struct {
 }
 
 type TreeEventHandler struct {
-	service *treeeventservice.TreeEventService
+	service *service.TreeEventService
 }
 
-func NewTreeEventHandler(s *treeeventservice.TreeEventService) *TreeEventHandler {
+func NewTreeEventHandler(s *service.TreeEventService) *TreeEventHandler {
 	return &TreeEventHandler{service: s}
 }
 
@@ -47,17 +47,17 @@ func (h *TreeEventHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	input := treeevent.CreateInput{
-		Location: treeevent.GeoPoint{
+	input := core.CreateInput{
+		Location: core.GeoPoint{
 			Latitude:  req.Location.Latitude,
 			Longitude: req.Location.Longitude,
 		},
-		EventType: treeevent.EventType(req.EventType),
+		EventType: core.EventType(req.EventType),
 		Title:     req.Title,
 		AuthorID:  req.AuthorID,
 	}
 
-	id, err := h.service.CreateTreeEvent(r.Context(), input)
+	id, err := h.service.Create(r.Context(), input)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return

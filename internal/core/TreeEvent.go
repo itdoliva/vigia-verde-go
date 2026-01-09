@@ -1,4 +1,4 @@
-package treeevent
+package core
 
 import "errors"
 

@@ -2,7 +2,7 @@ package repository
 
 import (
 	"context"
-	treeevent "vigia-verde-go/internal/core"
+	"vigia-verde-go/internal/core"
 
 	"cloud.google.com/go/firestore"
 )
@@ -15,9 +15,9 @@ func NewTreeEventRepository(client *firestore.Client) *TreeEventRepository {
 	return &TreeEventRepository{client: client}
 }
 
-func (r *TreeEventRepository) Create(ctx context.Context, input treeevent.TreeEvent) (string, error) {
-	col := r.client.Collection("treeEvents")
-	ref := col.NewDoc()
+func (r *TreeEventRepository) Create(ctx context.Context, input core.TreeEvent) (string, error) {
+	collection := r.client.Collection("treeEvents")
+	ref := collection.NewDoc()
 
 	doc := map[string]interface{}{
 		"location": map[string]float64{
