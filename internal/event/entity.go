@@ -1,4 +1,4 @@
-package core
+package event
 
 import "errors"
 
@@ -47,7 +47,7 @@ type CreateInput struct {
 	AuthorID  string
 }
 
-type TreeEvent struct {
+type Event struct {
 	ID        string
 	Location  GeoPoint
 	EventType EventType
@@ -57,18 +57,18 @@ type TreeEvent struct {
 	Downvotes int
 }
 
-func New(in CreateInput) (TreeEvent, error) {
+func New(in CreateInput) (*Event, error) {
 	if in.Title == "" {
-		return TreeEvent{}, ErrInvalidTitle
+		return nil, ErrInvalidTitle
 	}
 	if err := in.Location.Validate(); err != nil {
-		return TreeEvent{}, err
+		return nil, err
 	}
 	if err := in.EventType.Validate(); err != nil {
-		return TreeEvent{}, err
+		return nil, err
 	}
 
-	return TreeEvent{
+	return &Event{
 		Location:  in.Location,
 		EventType: in.EventType,
 		Title:     in.Title,
