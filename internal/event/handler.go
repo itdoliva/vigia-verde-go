@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"log"
 	"net/http"
 
 	"cloud.google.com/go/firestore"
@@ -66,6 +67,8 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) handleError(w http.ResponseWriter, err error) {
+	log.Print(err)
+
 	switch {
 	case errors.Is(err, ErrInvalidTitle),
 		errors.Is(err, ErrInvalidEventType),

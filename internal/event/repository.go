@@ -2,6 +2,7 @@ package event
 
 import (
 	"context"
+	"time"
 
 	"cloud.google.com/go/firestore"
 )
@@ -25,7 +26,6 @@ func (r *EventRepository) Create(ctx context.Context, ev *Event) (string, error)
 		AuthorID:  ev.AuthorID,
 		Upvotes:   ev.Upvotes,
 		Downvotes: ev.Downvotes,
-		CreatedAt: firestore.ServerTimestamp,
 	}
 
 	if _, err := docRef.Set(ctx, data); err != nil {
@@ -37,11 +37,11 @@ func (r *EventRepository) Create(ctx context.Context, ev *Event) (string, error)
 }
 
 type persistenceModel struct {
-	Location  GeoPoint `firestore:"location"`
-	EventType string   `firestore:"eventType"`
-	Title     string   `firestore:"title"`
-	AuthorID  string   `firestore:"authorId"`
-	Upvotes   int      `firestore:"upvotes"`
-	Downvotes int      `firestore:"downvotes"`
-	CreatedAt any      `firestore:"createdAt"`
+	Location  GeoPoint  `firestore:"location"`
+	EventType string    `firestore:"eventType"`
+	Title     string    `firestore:"title"`
+	AuthorID  string    `firestore:"authorId"`
+	Upvotes   int       `firestore:"upvotes"`
+	Downvotes int       `firestore:"downvotes"`
+	CreatedAt time.Time `firestore:"createdAt,serverTimestamp"`
 }
