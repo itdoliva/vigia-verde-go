@@ -4,8 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"log"
 	"net/http"
+	"vigia-verde-go/internal/platform/web"
 
 	"cloud.google.com/go/firestore"
 )
@@ -63,12 +63,12 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	_ = json.NewEncoder(w).Encode(map[string]string{"id": id})
+	_ = json.NewEncoder(w).Encode(web.Response{
+		Data: map[string]string{"id": id},
+	})
 }
 
 func (h *Handler) handleError(w http.ResponseWriter, err error) {
-	log.Print(err)
-
 	switch {
 	case errors.Is(err, ErrInvalidTitle),
 		errors.Is(err, ErrInvalidEventType),
