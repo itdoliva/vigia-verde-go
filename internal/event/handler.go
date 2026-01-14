@@ -12,6 +12,7 @@ import (
 
 type Service interface {
 	Create(ctx context.Context, input CreateInput) (string, error)
+	ListAll(ctx context.Context) ([]Event, error)
 }
 
 type CreateRequest struct {
@@ -46,6 +47,7 @@ func NewHandler(s Service) *Handler {
 
 func (h *Handler) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /events", h.Create)
+	mux.HandleFunc("GET /events", h.List)
 }
 
 func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
@@ -65,6 +67,19 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusCreated)
 	_ = json.NewEncoder(w).Encode(web.Response{
 		Data: map[string]string{"id": id},
+	})
+}
+
+func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
+	events, err := h.service.ListAll(r.Context())
+	if err != nil {
+		h.handleError(w, err)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	_ = json.NewEncoder(w).Encode(web.Response{
+		Data: events,
 	})
 }
 

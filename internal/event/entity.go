@@ -1,6 +1,9 @@
 package event
 
-import "errors"
+import (
+	"errors"
+	"time"
+)
 
 var (
 	ErrInvalidTitle     = errors.New("invalid title")
@@ -55,6 +58,7 @@ type Event struct {
 	AuthorID  string
 	Upvotes   int
 	Downvotes int
+	CreateAt  time.Time
 }
 
 func New(in CreateInput) (*Event, error) {
