@@ -4,7 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
+	"log"
 	"net/http"
+	"strconv"
 	"vigia-verde-go/internal/platform/web"
 
 	"cloud.google.com/go/firestore"
@@ -12,7 +15,7 @@ import (
 
 type Service interface {
 	Create(ctx context.Context, input CreateInput) (string, error)
-	ListAll(ctx context.Context) ([]Event, error)
+	ListAll(ctx context.Context, filter ListFilter) ([]Event, int, error)
 }
 
 type CreateRequest struct {
@@ -71,19 +74,50 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
-	events, err := h.service.ListAll(r.Context())
+	query := r.URL.Query()
+
+	limit, _ := strconv.Atoi(query.Get("limit"))
+	if limit <= 0 {
+		limit = 30
+	}
+	if limit > 50 {
+		limit = 50
+	}
+
+	page, _ := strconv.Atoi(query.Get("page"))
+	if page <= 0 {
+		page = 1
+	}
+
+	filter := ListFilter{
+		AuthorID:  query.Get("authorId"),
+		EventType: query.Get("eventType"),
+		Page:      page,
+		Limit:     limit,
+		Radius:    100,
+	}
+
+	events, total, err := h.service.ListAll(r.Context(), filter)
 	if err != nil {
 		h.handleError(w, err)
 		return
 	}
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	_ = json.NewEncoder(w).Encode(web.Response{
 		Data: events,
+		Meta: web.PaginationMeta{
+			TotalItems:  total,
+			CurrentPage: page,
+		},
 	})
+
+	fmt.Println("URL Completa recebida:", r.URL.String())
 }
 
 func (h *Handler) handleError(w http.ResponseWriter, err error) {
+	log.Printf("[ERROR] %v", err)
 	switch {
 	case errors.Is(err, ErrInvalidTitle),
 		errors.Is(err, ErrInvalidEventType),

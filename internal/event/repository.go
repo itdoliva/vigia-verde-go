@@ -2,9 +2,12 @@ package event
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"time"
 
 	"cloud.google.com/go/firestore"
+	"cloud.google.com/go/firestore/apiv1/firestorepb"
 )
 
 type EventRepository struct {
@@ -46,17 +49,52 @@ type persistenceModel struct {
 	CreatedAt time.Time `firestore:"createdAt,serverTimestamp"`
 }
 
-func (r *EventRepository) FindAll(ctx context.Context) ([]Event, error) {
+func (r *EventRepository) FindAll(ctx context.Context, filter ListFilter) ([]Event, int, error) {
 	collection := r.client.Collection("treeEvents")
-	docs, err := collection.Documents(ctx).GetAll()
-	if err != nil {
-		return nil, err
+	q := collection.Query
+
+	if filter.AuthorID != "" {
+		q = q.Where("authorId", "==", filter.AuthorID)
 	}
+	if filter.EventType != "" {
+		q = q.Where("eventType", "==", filter.EventType)
+	}
+
+	aggRes, err := q.NewAggregationQuery().WithCount("all").Get(ctx)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	raw, ok := aggRes["all"]
+	if !ok {
+		return nil, 0, errors.New(`missing aggregation key "all"`)
+	}
+
+	var totalCount int64
+	switch v := raw.(type) {
+	case int64:
+		totalCount = v
+	case *firestorepb.Value:
+		totalCount = v.GetIntegerValue()
+	default:
+		return nil, 0, fmt.Errorf("unexpected type for count: %T", raw)
+	}
+
+	offset := (filter.Page - 1) * filter.Limit
+
+	docs, err := q.Limit(filter.Limit).
+		Offset(offset).
+		Documents(ctx).GetAll()
+
+	if err != nil {
+		return nil, 0, err
+	}
+
 	events := make([]Event, 0, len(docs))
 	for _, doc := range docs {
 		var p persistenceModel
 		if err := doc.DataTo(&p); err != nil {
-			return nil, err
+			return nil, 0, err
 		}
 
 		events = append(events, Event{
@@ -67,9 +105,9 @@ func (r *EventRepository) FindAll(ctx context.Context) ([]Event, error) {
 			AuthorID:  p.AuthorID,
 			Upvotes:   p.Upvotes,
 			Downvotes: p.Downvotes,
-			CreateAt:  p.CreatedAt,
+			CreatedAt: p.CreatedAt,
 		})
 	}
-	return events, nil
-
+	fmt.Printf("Filtros recebidos - Author: %s, Type: %s\n", filter.AuthorID, filter.EventType)
+	return events, int(totalCount), nil
 }

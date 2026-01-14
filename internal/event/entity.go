@@ -58,7 +58,7 @@ type Event struct {
 	AuthorID  string
 	Upvotes   int
 	Downvotes int
-	CreateAt  time.Time
+	CreatedAt time.Time
 }
 
 func New(in CreateInput) (*Event, error) {
@@ -80,4 +80,14 @@ func New(in CreateInput) (*Event, error) {
 		Upvotes:   0,
 		Downvotes: 0,
 	}, nil
+}
+
+type ListFilter struct {
+	Latitude  *float64
+	Longitude *float64
+	Radius    float64
+	AuthorID  string
+	EventType string
+	Page      int
+	Limit     int
 }

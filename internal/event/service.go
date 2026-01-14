@@ -6,7 +6,7 @@ import (
 
 type Repository interface {
 	Create(ctx context.Context, ev *Event) (string, error)
-	FindAll(ctx context.Context) ([]Event, error)
+	FindAll(ctx context.Context, filter ListFilter) ([]Event, int, error)
 }
 
 type EventService struct {
@@ -19,8 +19,8 @@ func NewService(repo Repository) *EventService {
 	}
 }
 
-func (s *EventService) ListAll(ctx context.Context) ([]Event, error) {
-	return s.repo.FindAll(ctx)
+func (s *EventService) ListAll(ctx context.Context, filter ListFilter) ([]Event, int, error) {
+	return s.repo.FindAll(ctx, filter)
 }
 
 func (s *EventService) Create(ctx context.Context, input CreateInput) (string, error) {
