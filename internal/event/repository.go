@@ -119,3 +119,26 @@ func (r *EventRepository) FindAll(ctx context.Context, filter ListFilter) ([]Eve
 	fmt.Printf("Filtros recebidos - Author: %s, Type: %s\n", filter.AuthorID, filter.EventType)
 	return events, int(totalCount), nil
 }
+
+func (r *EventRepository) FindByID(ctx context.Context, id string) (*Event, error) {
+	doc, err := r.client.Collection("treeEvents").Doc(id).Get(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	var p persistenceModel
+	if err := doc.DataTo(&p); err != nil {
+		return nil, err
+	}
+
+	return &Event{
+		ID:        doc.Ref.ID,
+		Location:  p.Location,
+		EventType: EventType(p.EventType),
+		Title:     p.Title,
+		AuthorID:  p.AuthorID,
+		Upvotes:   p.Upvotes,
+		Downvotes: p.Downvotes,
+		CreatedAt: p.CreatedAt,
+	}, nil
+}

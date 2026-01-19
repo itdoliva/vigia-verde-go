@@ -11,11 +11,14 @@ import (
 	"vigia-verde-go/internal/platform/web"
 
 	"cloud.google.com/go/firestore"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type Service interface {
 	Create(ctx context.Context, input CreateInput) (string, error)
 	ListAll(ctx context.Context, filter ListFilter) ([]Event, int, error)
+	GetByID(ctx context.Context, id string) (*Event, error)
 }
 
 type CreateRequest struct {
@@ -51,6 +54,7 @@ func NewHandler(s Service) *Handler {
 func (h *Handler) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /events", h.Create)
 	mux.HandleFunc("GET /events", h.List)
+	mux.HandleFunc("GET /events/{id}", h.Get)
 }
 
 func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
@@ -135,8 +139,29 @@ func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("URL Completa recebida:", r.URL.String())
 }
 
+func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
+	id := r.PathValue("id")
+
+	event, err := h.service.GetByID(r.Context(), id)
+	if err != nil {
+		h.handleError(w, err)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(web.Response{
+		Data: event,
+	})
+}
+
 func (h *Handler) handleError(w http.ResponseWriter, err error) {
 	log.Printf("[ERROR] %v", err)
+
+	if status.Code(err) == codes.NotFound {
+		http.Error(w, "event not found", http.StatusNotFound)
+		return
+	}
+
 	switch {
 	case errors.Is(err, ErrInvalidTitle),
 		errors.Is(err, ErrInvalidEventType),
