@@ -2,6 +2,7 @@ package event
 
 import (
 	"errors"
+	"math"
 	"time"
 )
 
@@ -90,4 +91,20 @@ type ListFilter struct {
 	EventType string
 	Page      int
 	Limit     int
+}
+
+// Formula de Haversine
+func (p GeoPoint) Distancia(other GeoPoint) float64 {
+	const R = 6371000 // Raio da Terra em metros
+	phi1 := p.Latitude * math.Pi / 180
+	phi2 := other.Latitude * math.Pi / 180
+	dphi := (other.Latitude - p.Latitude) * math.Pi / 180
+	dlng := (other.Longitude - p.Longitude) * math.Pi / 180
+
+	a := math.Sin(dphi/2)*math.Sin(dphi/2) +
+		math.Cos(phi1)*math.Cos(phi2)*
+			math.Sin(dlng/2)*math.Sin(dlng/2)
+	c := 2 * math.Atan2(math.Sqrt(a), math.Sqrt(1-a))
+
+	return R * c
 }

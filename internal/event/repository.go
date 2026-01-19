@@ -82,9 +82,7 @@ func (r *EventRepository) FindAll(ctx context.Context, filter ListFilter) ([]Eve
 
 	offset := (filter.Page - 1) * filter.Limit
 
-	docs, err := q.Limit(filter.Limit).
-		Offset(offset).
-		Documents(ctx).GetAll()
+	docs, err := q.Limit(filter.Limit).Offset(offset).Documents(ctx).GetAll()
 
 	if err != nil {
 		return nil, 0, err
@@ -95,6 +93,16 @@ func (r *EventRepository) FindAll(ctx context.Context, filter ListFilter) ([]Eve
 		var p persistenceModel
 		if err := doc.DataTo(&p); err != nil {
 			return nil, 0, err
+		}
+
+		// --- FILTRO DE RAIO EM MEMÓRIA ---
+		if filter.Latitude != nil && filter.Longitude != nil {
+			centroBusca := GeoPoint{Latitude: *filter.Latitude, Longitude: *filter.Longitude}
+			distancia := centroBusca.Distancia(p.Location)
+
+			if distancia > filter.Radius {
+				continue
+			}
 		}
 
 		events = append(events, Event{

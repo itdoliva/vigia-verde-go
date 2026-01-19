@@ -89,12 +89,31 @@ func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 		page = 1
 	}
 
+	var latPtr, lngPtr *float64
+	latStr := query.Get("lat")
+	lngStr := query.Get("lng")
+	if latStr != "" && lngStr != "" {
+		l1, _ := strconv.ParseFloat(latStr, 64)
+		l2, _ := strconv.ParseFloat(lngStr, 64)
+		latPtr = &l1
+		lngPtr = &l2
+	}
+
+	radius := 100.0
+	if rStr := query.Get("radius"); rStr != "" {
+		if rVal, err := strconv.ParseFloat(rStr, 64); err == nil {
+			radius = rVal
+		}
+	}
+
 	filter := ListFilter{
 		AuthorID:  query.Get("authorId"),
 		EventType: query.Get("eventType"),
 		Page:      page,
 		Limit:     limit,
-		Radius:    100,
+		Latitude:  latPtr,
+		Longitude: lngPtr,
+		Radius:    radius,
 	}
 
 	events, total, err := h.service.ListAll(r.Context(), filter)
