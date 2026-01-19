@@ -26,9 +26,9 @@ type CreateRequest struct {
 		Latitude  float64 `json:"latitude"`
 		Longitude float64 `json:"longitude"`
 	} `json:"location"`
-	EventType string `json:"eventType"`
+	EventType string `json:"event_type"`
 	Title     string `json:"title"`
-	AuthorID  string `json:"authorId"`
+	AuthorID  string `json:"author_id"`
 }
 
 func (req CreateRequest) toInput() CreateInput {

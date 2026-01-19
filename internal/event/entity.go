@@ -13,8 +13,8 @@ var (
 )
 
 type GeoPoint struct {
-	Latitude  float64
-	Longitude float64
+	Latitude  float64 `json:"latitude"`
+	Longitude float64 `json:"longitude"`
 }
 
 func (p GeoPoint) Validate() error {
@@ -52,14 +52,14 @@ type CreateInput struct {
 }
 
 type Event struct {
-	ID        string
-	Location  GeoPoint
-	EventType EventType
-	Title     string
-	AuthorID  string
-	Upvotes   int
-	Downvotes int
-	CreatedAt time.Time
+	ID        string    `json:"id"`
+	Location  GeoPoint  `json:"location"`
+	EventType EventType `json:"event_type"`
+	Title     string    `json:"title"`
+	AuthorID  string    `json:"author_id"`
+	Upvotes   int       `json:"upvotes"`
+	Downvotes int       `json:"downvotes"`
+	CreatedAt time.Time `json:"created_at"`
 }
 
 func New(in CreateInput) (*Event, error) {

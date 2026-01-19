@@ -6,6 +6,6 @@ type Response struct {
 }
 
 type PaginationMeta struct {
-	TotalItems  int `json:"totalItems,omitempty"`
-	CurrentPage int `json:"currentPage,omitempty"`
+	TotalItems  int `json:"total_items,omitempty"`
+	CurrentPage int `json:"current_page,omitempty"`
 }
