@@ -21,6 +21,9 @@ func NewService(repo Repository) *EventService {
 }
 
 func (s *EventService) ListAll(ctx context.Context, filter ListFilter) ([]Event, int, error) {
+	if err := filter.Validate(); err != nil {
+		return nil, 0, err
+	}
 	return s.repo.FindAll(ctx, filter)
 }
 

@@ -8,6 +8,7 @@ import (
 
 	"cloud.google.com/go/firestore"
 	"cloud.google.com/go/firestore/apiv1/firestorepb"
+	"github.com/mmcloughlin/geohash"
 )
 
 type EventRepository struct {
@@ -21,14 +22,23 @@ func NewRepository(client *firestore.Client) *EventRepository {
 func (r *EventRepository) Create(ctx context.Context, ev *Event) (string, error) {
 	collection := r.client.Collection("treeEvents")
 	docRef := collection.NewDoc()
+	hash := geohash.Encode(ev.Location.Latitude, ev.Location.Longitude)
+	tokens := []string{
+		hash[:5],
+		hash[:6],
+		hash[:7],
+		hash[:8],
+	}
 
 	data := persistenceModel{
-		Location:  ev.Location,
-		EventType: string(ev.EventType),
-		Title:     ev.Title,
-		AuthorID:  ev.AuthorID,
-		Upvotes:   ev.Upvotes,
-		Downvotes: ev.Downvotes,
+		Location:      ev.Location,
+		Geohash:       hash,
+		GeohashTokens: tokens,
+		EventType:     string(ev.EventType),
+		Title:         ev.Title,
+		AuthorID:      ev.AuthorID,
+		Upvotes:       ev.Upvotes,
+		Downvotes:     ev.Downvotes,
 	}
 
 	if _, err := docRef.Set(ctx, data); err != nil {
@@ -40,13 +50,15 @@ func (r *EventRepository) Create(ctx context.Context, ev *Event) (string, error)
 }
 
 type persistenceModel struct {
-	Location  GeoPoint  `firestore:"location"`
-	EventType string    `firestore:"eventType"`
-	Title     string    `firestore:"title"`
-	AuthorID  string    `firestore:"authorId"`
-	Upvotes   int       `firestore:"upvotes"`
-	Downvotes int       `firestore:"downvotes"`
-	CreatedAt time.Time `firestore:"createdAt,serverTimestamp"`
+	Location      GeoPoint  `firestore:"location"`
+	Geohash       string    `firestore:"geohash"`
+	GeohashTokens []string  `firestore:"geohashTokens"`
+	EventType     string    `firestore:"eventType"`
+	Title         string    `firestore:"title"`
+	AuthorID      string    `firestore:"authorId"`
+	Upvotes       int       `firestore:"upvotes"`
+	Downvotes     int       `firestore:"downvotes"`
+	CreatedAt     time.Time `firestore:"createdAt,serverTimestamp"`
 }
 
 func (r *EventRepository) FindAll(ctx context.Context, filter ListFilter) ([]Event, int, error) {
@@ -60,24 +72,37 @@ func (r *EventRepository) FindAll(ctx context.Context, filter ListFilter) ([]Eve
 		q = q.Where("eventType", "==", filter.EventType)
 	}
 
+	if filter.Latitude != nil && filter.Longitude != nil {
+		fullHash := geohash.Encode(*filter.Latitude, *filter.Longitude)
+
+		precision := 6
+		if filter.Precision != nil {
+			precision = *filter.Precision
+		}
+
+		centerHash := fullHash[:precision]
+		prefixes := append(geohash.Neighbors(centerHash), centerHash)
+		q = q.Where("geohashTokens", "array-contains-any", prefixes)
+	}
+
 	aggRes, err := q.NewAggregationQuery().WithCount("all").Get(ctx)
 	if err != nil {
 		return nil, 0, err
 	}
 
-	raw, ok := aggRes["all"]
+	countValue, ok := aggRes["all"]
 	if !ok {
 		return nil, 0, errors.New(`missing aggregation key "all"`)
 	}
 
 	var totalCount int64
-	switch v := raw.(type) {
+	switch v := countValue.(type) {
 	case int64:
 		totalCount = v
 	case *firestorepb.Value:
 		totalCount = v.GetIntegerValue()
 	default:
-		return nil, 0, fmt.Errorf("unexpected type for count: %T", raw)
+		return nil, 0, fmt.Errorf("unexpected type for count: %T", countValue)
 	}
 
 	offset := (filter.Page - 1) * filter.Limit
@@ -95,19 +120,10 @@ func (r *EventRepository) FindAll(ctx context.Context, filter ListFilter) ([]Eve
 			return nil, 0, err
 		}
 
-		// --- FILTRO DE RAIO EM MEMÓRIA ---
-		if filter.Latitude != nil && filter.Longitude != nil {
-			centroBusca := GeoPoint{Latitude: *filter.Latitude, Longitude: *filter.Longitude}
-			distancia := centroBusca.Distancia(p.Location)
-
-			if distancia > filter.Radius {
-				continue
-			}
-		}
-
 		events = append(events, Event{
 			ID:        doc.Ref.ID,
 			Location:  p.Location,
+			Geohash:   p.Geohash,
 			EventType: EventType(p.EventType),
 			Title:     p.Title,
 			AuthorID:  p.AuthorID,
@@ -116,7 +132,6 @@ func (r *EventRepository) FindAll(ctx context.Context, filter ListFilter) ([]Eve
 			CreatedAt: p.CreatedAt,
 		})
 	}
-	fmt.Printf("Filtros recebidos - Author: %s, Type: %s\n", filter.AuthorID, filter.EventType)
 	return events, int(totalCount), nil
 }
 

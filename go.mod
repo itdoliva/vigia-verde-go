@@ -5,6 +5,7 @@ go 1.25.5
 require (
 	cloud.google.com/go/firestore v1.20.0
 	firebase.google.com/go/v4 v4.18.0
+	github.com/mmcloughlin/geohash v0.10.0
 	google.golang.org/api v0.259.0
 	google.golang.org/grpc v1.78.0
 )

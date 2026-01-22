@@ -4,11 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"log"
 	"net/http"
 	"strconv"
 	"vigia-verde-go/internal/platform/web"
+	"vigia-verde-go/pkg/request"
 
 	"cloud.google.com/go/firestore"
 	"google.golang.org/grpc/codes"
@@ -79,36 +79,16 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Query()
-
-	limit, _ := strconv.Atoi(query.Get("limit"))
-	if limit <= 0 {
-		limit = 30
-	}
-	if limit > 50 {
-		limit = 50
-	}
-
-	page, _ := strconv.Atoi(query.Get("page"))
-	if page <= 0 {
-		page = 1
-	}
-
-	var latPtr, lngPtr *float64
-	latStr := query.Get("lat")
-	lngStr := query.Get("lng")
-	if latStr != "" && lngStr != "" {
-		l1, _ := strconv.ParseFloat(latStr, 64)
-		l2, _ := strconv.ParseFloat(lngStr, 64)
-		latPtr = &l1
-		lngPtr = &l2
-	}
-
-	radius := 100.0
-	if rStr := query.Get("radius"); rStr != "" {
-		if rVal, err := strconv.ParseFloat(rStr, 64); err == nil {
-			radius = rVal
+	var precision *int
+	if query.Get("precision") != "" {
+		p, err := strconv.Atoi(query.Get("precision"))
+		if err == nil {
+			precision = &p
 		}
 	}
+	page, limit := request.GetPagination(query)
+
+	latPtr, lngPtr := request.GetCoordinates(query)
 
 	filter := ListFilter{
 		AuthorID:  query.Get("authorId"),
@@ -117,7 +97,7 @@ func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 		Limit:     limit,
 		Latitude:  latPtr,
 		Longitude: lngPtr,
-		Radius:    radius,
+		Precision: precision,
 	}
 
 	events, total, err := h.service.ListAll(r.Context(), filter)
@@ -135,8 +115,6 @@ func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 			CurrentPage: page,
 		},
 	})
-
-	fmt.Println("URL Completa recebida:", r.URL.String())
 }
 
 func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
@@ -156,7 +134,6 @@ func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) handleError(w http.ResponseWriter, err error) {
 	log.Printf("[ERROR] %v", err)
-
 	if status.Code(err) == codes.NotFound {
 		http.Error(w, "event not found", http.StatusNotFound)
 		return
@@ -165,7 +142,8 @@ func (h *Handler) handleError(w http.ResponseWriter, err error) {
 	switch {
 	case errors.Is(err, ErrInvalidTitle),
 		errors.Is(err, ErrInvalidEventType),
-		errors.Is(err, ErrInvalidGeoPoint):
+		errors.Is(err, ErrInvalidGeoPoint),
+		errors.Is(err, ErrInvalidPrecision):
 		http.Error(w, err.Error(), http.StatusBadRequest)
 	default:
 		http.Error(w, "internal server error", http.StatusInternalServerError)

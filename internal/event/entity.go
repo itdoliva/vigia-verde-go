@@ -2,7 +2,6 @@ package event
 
 import (
 	"errors"
-	"math"
 	"time"
 )
 
@@ -10,6 +9,7 @@ var (
 	ErrInvalidTitle     = errors.New("invalid title")
 	ErrInvalidEventType = errors.New("invalid eventType")
 	ErrInvalidGeoPoint  = errors.New("invalid location")
+	ErrInvalidPrecision = errors.New("invalid precision")
 )
 
 type GeoPoint struct {
@@ -54,6 +54,7 @@ type CreateInput struct {
 type Event struct {
 	ID        string    `json:"id"`
 	Location  GeoPoint  `json:"location"`
+	Geohash   string    `firestore:"geohash"`
 	EventType EventType `json:"event_type"`
 	Title     string    `json:"title"`
 	AuthorID  string    `json:"author_id"`
@@ -86,25 +87,22 @@ func New(in CreateInput) (*Event, error) {
 type ListFilter struct {
 	Latitude  *float64
 	Longitude *float64
-	Radius    float64
+	Precision *int
 	AuthorID  string
 	EventType string
 	Page      int
 	Limit     int
 }
 
-// Formula de Haversine
-func (p GeoPoint) Distancia(other GeoPoint) float64 {
-	const R = 6371000 // Raio da Terra em metros
-	phi1 := p.Latitude * math.Pi / 180
-	phi2 := other.Latitude * math.Pi / 180
-	dphi := (other.Latitude - p.Latitude) * math.Pi / 180
-	dlng := (other.Longitude - p.Longitude) * math.Pi / 180
-
-	a := math.Sin(dphi/2)*math.Sin(dphi/2) +
-		math.Cos(phi1)*math.Cos(phi2)*
-			math.Sin(dlng/2)*math.Sin(dlng/2)
-	c := 2 * math.Atan2(math.Sqrt(a), math.Sqrt(1-a))
-
-	return R * c
+func (f ListFilter) Validate() error {
+	if f.Latitude != nil || f.Longitude != nil {
+		if f.Precision == nil {
+			p := 6
+			f.Precision = &p
+		}
+		if *f.Precision < 5 || *f.Precision > 8 {
+			return ErrInvalidPrecision
+		}
+	}
+	return nil
 }
