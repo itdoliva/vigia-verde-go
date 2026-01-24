@@ -1,6 +1,7 @@
 package web
 
 import (
+	"errors"
 	"net/url"
 	"strconv"
 )
@@ -22,18 +23,25 @@ func GetPagination(query url.Values) (page int, limit int) {
 	return page, limit
 }
 
-func GetCoordinates(query url.Values) (lat *float64, lng *float64) {
+func GetCoordinates(query url.Values) (lat *float64, lng *float64, err error) {
 	latStr := query.Get("lat")
 	lngStr := query.Get("lng")
 
-	if latStr != "" && lngStr != "" {
-		l1, err1 := strconv.ParseFloat(latStr, 64)
-		l2, err2 := strconv.ParseFloat(lngStr, 64)
-		if err1 == nil && err2 == nil {
-			return &l1, &l2
-		}
+	if latStr == "" && lngStr == "" {
+		return nil, nil, nil
 	}
-	return nil, nil
+
+	if latStr == "" || lngStr == "" {
+		return nil, nil, errors.New("both 'lat' and 'lng' parameters are required for location filter")
+	}
+	l1, err1 := strconv.ParseFloat(latStr, 64)
+	l2, err2 := strconv.ParseFloat(lngStr, 64)
+
+	if err1 != nil || err2 != nil {
+		return nil, nil, errors.New("invalid format for 'lat' or 'lng'")
+	}
+
+	return &l1, &l2, nil
 }
 
 func GetPrecision(query url.Values) (precision *int) {

@@ -80,7 +80,11 @@ func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 
 	precision := web.GetPrecision(query)
 	page, limit := web.GetPagination(query)
-	latPtr, lngPtr := web.GetCoordinates(query)
+	latPtr, lngPtr, err := web.GetCoordinates(query)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 
 	filter := ListFilter{
 		AuthorID:  query.Get("authorId"),
