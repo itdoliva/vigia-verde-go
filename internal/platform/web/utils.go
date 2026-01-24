@@ -1,4 +1,4 @@
-package request
+package web
 
 import (
 	"net/url"
@@ -34,4 +34,14 @@ func GetCoordinates(query url.Values) (lat *float64, lng *float64) {
 		}
 	}
 	return nil, nil
+}
+
+func GetPrecision(query url.Values) (precision *int) {
+	if query.Get("precision") != "" {
+		p, err := strconv.Atoi(query.Get("precision"))
+		if err == nil {
+			return &p
+		}
+	}
+	return nil
 }

@@ -6,9 +6,7 @@ import (
 	"errors"
 	"log"
 	"net/http"
-	"strconv"
 	"vigia-verde-go/internal/platform/web"
-	"vigia-verde-go/pkg/request"
 
 	"cloud.google.com/go/firestore"
 	"google.golang.org/grpc/codes"
@@ -79,16 +77,10 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Query()
-	var precision *int
-	if query.Get("precision") != "" {
-		p, err := strconv.Atoi(query.Get("precision"))
-		if err == nil {
-			precision = &p
-		}
-	}
-	page, limit := request.GetPagination(query)
 
-	latPtr, lngPtr := request.GetCoordinates(query)
+	precision := web.GetPrecision(query)
+	page, limit := web.GetPagination(query)
+	latPtr, lngPtr := web.GetCoordinates(query)
 
 	filter := ListFilter{
 		AuthorID:  query.Get("authorId"),
