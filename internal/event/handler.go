@@ -68,11 +68,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-	_ = json.NewEncoder(w).Encode(web.Response{
-		Data: map[string]string{"id": id},
-	})
+	web.Respond(w, http.StatusCreated, map[string]string{"id": id})
 }
 
 func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
@@ -102,15 +98,8 @@ func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	_ = json.NewEncoder(w).Encode(web.Response{
-		Data: events,
-		Meta: web.PaginationMeta{
-			TotalItems:  total,
-			CurrentPage: page,
-		},
-	})
+	meta := &web.PaginationMeta{TotalItems: total, CurrentPage: page}
+	web.Respond(w, http.StatusOK, events, meta)
 }
 
 func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
@@ -122,10 +111,7 @@ func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	_ = json.NewEncoder(w).Encode(web.Response{
-		Data: event,
-	})
+	web.Respond(w, http.StatusOK, event)
 }
 
 func (h *Handler) handleError(w http.ResponseWriter, err error) {
