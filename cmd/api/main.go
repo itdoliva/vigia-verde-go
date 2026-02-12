@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"net/http"
+	"os"
 
 	"vigia-verde-go/internal/event"
 	"vigia-verde-go/internal/platform/config"
@@ -25,7 +26,12 @@ func main() {
 	eventHandler := event.SetupModule(fsClient)
 	eventHandler.RegisterRoutes(mux)
 
-	addr := ":8080"
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+
+	addr := ":" + port
 	log.Printf("Servidor HTTP ouvindo em %s ...", addr)
 
 	if err := http.ListenAndServe(addr, mux); err != nil {
