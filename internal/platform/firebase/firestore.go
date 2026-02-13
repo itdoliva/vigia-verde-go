@@ -6,24 +6,19 @@ import (
 	"os"
 
 	"cloud.google.com/go/firestore"
-	firebase "firebase.google.com/go/v4"
-	"google.golang.org/api/option"
 )
 
 func NewFirestoreClient(ctx context.Context) (*firestore.Client, error) {
-	jsonPath := os.Getenv("GOOGLE_APPLICATION_CREDENTIALS")
-	if jsonPath == "" {
-		return nil, fmt.Errorf("environment variable GOOGLE_APPLICATION_CREDENTIALS is not set")
+	projectID := os.Getenv("FIREBASE_PROJECT_ID")
+	if projectID == "" {
+		projectID = os.Getenv("GOOGLE_CLOUD_PROJECT")
 	}
 
-	opt := option.WithAuthCredentialsFile(option.ServiceAccount, jsonPath)
-
-	app, err := firebase.NewApp(ctx, nil, opt)
-	if err != nil {
-		return nil, fmt.Errorf("failed to initialize firebase app: %w", err)
+	if projectID == "" {
+		return nil, fmt.Errorf("project ID not found")
 	}
 
-	client, err := app.Firestore(ctx)
+	client, err := firestore.NewClient(ctx, projectID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create firestore client: %w", err)
 	}
