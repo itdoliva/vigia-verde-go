@@ -2,14 +2,17 @@ package event
 
 import (
 	"errors"
+	"net/http"
 	"time"
+	"vigia-verde-go/internal/platform/web"
 )
 
 var (
-	ErrInvalidTitle     = errors.New("invalid title")
-	ErrInvalidEventType = errors.New("invalid eventType")
-	ErrInvalidGeoPoint  = errors.New("invalid location")
-	ErrInvalidPrecision = errors.New("invalid precision")
+	ErrInvalidTitle     = web.Error{Err: errors.New("invalid title"), Status: http.StatusBadRequest}
+	ErrInvalidEventType = web.Error{Err: errors.New("invalid eventType"), Status: http.StatusBadRequest}
+	ErrInvalidGeoPoint  = web.Error{Err: errors.New("invalid location"), Status: http.StatusBadRequest}
+	ErrInvalidPrecision = web.Error{Err: errors.New("invalid precision"), Status: http.StatusBadRequest}
+	ErrNotFound         = web.Error{Err: errors.New("event not found"), Status: http.StatusNotFound}
 )
 
 type GeoPoint struct {
@@ -62,6 +65,13 @@ type Event struct {
 	Downvotes int       `json:"downvotes"`
 	CreatedAt time.Time `json:"created_at"`
 }
+type EventResponse struct {
+	ID        string    `json:"id"`
+	Location  GeoPoint  `json:"location"`
+	Geohash   string    `firestore:"geohash"`
+	EventType EventType `json:"event_type"`
+	CreatedAt time.Time `json:"created_at"`
+}
 
 func New(in CreateInput) (*Event, error) {
 	if in.Title == "" {
@@ -84,7 +94,7 @@ func New(in CreateInput) (*Event, error) {
 	}, nil
 }
 
-type ListFilter struct {
+type ListFilterParams struct {
 	Latitude  *float64
 	Longitude *float64
 	Precision *int
@@ -94,7 +104,7 @@ type ListFilter struct {
 	Limit     int
 }
 
-func (f ListFilter) Validate() error {
+func (f *ListFilterParams) Validate() error {
 	if f.Latitude != nil || f.Longitude != nil {
 		if f.Precision == nil {
 			p := 6

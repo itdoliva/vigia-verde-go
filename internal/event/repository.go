@@ -49,6 +49,7 @@ func (r *EventRepository) Create(ctx context.Context, ev *Event) (string, error)
 	return docRef.ID, nil
 }
 
+// Falta adicionar URL da imagem, comentarios e numero de comentarios
 type persistenceModel struct {
 	Location      GeoPoint  `firestore:"location"`
 	Geohash       string    `firestore:"geohash"`
@@ -61,7 +62,7 @@ type persistenceModel struct {
 	CreatedAt     time.Time `firestore:"createdAt,serverTimestamp"`
 }
 
-func (r *EventRepository) FindAll(ctx context.Context, filter ListFilter) ([]Event, int, error) {
+func (r *EventRepository) FindAll(ctx context.Context, filter ListFilterParams) ([]EventResponse, int, error) {
 	collection := r.client.Collection("treeEvents")
 	q := collection.Query
 
@@ -85,14 +86,14 @@ func (r *EventRepository) FindAll(ctx context.Context, filter ListFilter) ([]Eve
 		q = q.Where("geohashTokens", "array-contains-any", prefixes)
 	}
 
-	aggRes, err := q.NewAggregationQuery().WithCount("all").Get(ctx)
+	aggregation, err := q.NewAggregationQuery().WithCount("total_count").Get(ctx)
 	if err != nil {
 		return nil, 0, err
 	}
 
-	countValue, ok := aggRes["all"]
+	countValue, ok := aggregation["total_count"]
 	if !ok {
-		return nil, 0, errors.New(`missing aggregation key "all"`)
+		return nil, 0, errors.New(`missing aggregation key "total_count"`)
 	}
 
 	var totalCount int64
@@ -113,22 +114,18 @@ func (r *EventRepository) FindAll(ctx context.Context, filter ListFilter) ([]Eve
 		return nil, 0, err
 	}
 
-	events := make([]Event, 0, len(docs))
+	events := make([]EventResponse, 0, len(docs))
 	for _, doc := range docs {
 		var p persistenceModel
 		if err := doc.DataTo(&p); err != nil {
 			return nil, 0, err
 		}
 
-		events = append(events, Event{
+		events = append(events, EventResponse{
 			ID:        doc.Ref.ID,
 			Location:  p.Location,
 			Geohash:   p.Geohash,
 			EventType: EventType(p.EventType),
-			Title:     p.Title,
-			AuthorID:  p.AuthorID,
-			Upvotes:   p.Upvotes,
-			Downvotes: p.Downvotes,
 			CreatedAt: p.CreatedAt,
 		})
 	}

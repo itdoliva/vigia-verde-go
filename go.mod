@@ -7,7 +7,6 @@ require (
 	firebase.google.com/go/v4 v4.18.0
 	github.com/mmcloughlin/geohash v0.10.0
 	google.golang.org/api v0.259.0
-	google.golang.org/grpc v1.78.0
 )
 
 require (
@@ -60,5 +59,6 @@ require (
 	google.golang.org/genproto v0.0.0-20251202230838-ff82c1b0f217 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20251202230838-ff82c1b0f217 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20251222181119-0a764e51fe1b // indirect
+	google.golang.org/grpc v1.78.0 // indirect
 	google.golang.org/protobuf v1.36.11 // indirect
 )

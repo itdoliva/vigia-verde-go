@@ -3,19 +3,15 @@ package event
 import (
 	"context"
 	"encoding/json"
-	"errors"
-	"log"
 	"net/http"
 	"vigia-verde-go/internal/platform/web"
 
 	"cloud.google.com/go/firestore"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
 type Service interface {
 	Create(ctx context.Context, input CreateInput) (string, error)
-	ListAll(ctx context.Context, filter ListFilter) ([]Event, int, error)
+	ListAll(ctx context.Context, filter ListFilterParams) ([]EventResponse, int, error)
 	GetByID(ctx context.Context, id string) (*Event, error)
 }
 
@@ -64,7 +60,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 
 	id, err := h.service.Create(r.Context(), req.toInput())
 	if err != nil {
-		h.handleError(w, err)
+		h.handleError(w, r, err)
 		return
 	}
 
@@ -82,9 +78,9 @@ func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	filter := ListFilter{
-		AuthorID:  query.Get("authorId"),
-		EventType: query.Get("eventType"),
+	filter := ListFilterParams{
+		AuthorID:  query.Get("author_id"),
+		EventType: query.Get("event_type"),
 		Page:      page,
 		Limit:     limit,
 		Latitude:  latPtr,
@@ -94,7 +90,7 @@ func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 
 	events, total, err := h.service.ListAll(r.Context(), filter)
 	if err != nil {
-		h.handleError(w, err)
+		h.handleError(w, r, err)
 		return
 	}
 
@@ -107,29 +103,15 @@ func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
 
 	event, err := h.service.GetByID(r.Context(), id)
 	if err != nil {
-		h.handleError(w, err)
+		h.handleError(w, r, err)
 		return
 	}
 
 	web.Respond(w, http.StatusOK, event)
 }
 
-func (h *Handler) handleError(w http.ResponseWriter, err error) {
-	log.Printf("[ERROR] %v", err)
-	if status.Code(err) == codes.NotFound {
-		http.Error(w, "event not found", http.StatusNotFound)
-		return
-	}
-
-	switch {
-	case errors.Is(err, ErrInvalidTitle),
-		errors.Is(err, ErrInvalidEventType),
-		errors.Is(err, ErrInvalidGeoPoint),
-		errors.Is(err, ErrInvalidPrecision):
-		http.Error(w, err.Error(), http.StatusBadRequest)
-	default:
-		http.Error(w, "internal server error", http.StatusInternalServerError)
-	}
+func (h *Handler) handleError(w http.ResponseWriter, r *http.Request, err error) {
+	web.RespondError(w, r, err)
 }
 
 func SetupModule(db *firestore.Client) *Handler {

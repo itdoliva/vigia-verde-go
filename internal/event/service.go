@@ -6,7 +6,7 @@ import (
 
 type Repository interface {
 	Create(ctx context.Context, ev *Event) (string, error)
-	FindAll(ctx context.Context, filter ListFilter) ([]Event, int, error)
+	FindAll(ctx context.Context, filter ListFilterParams) ([]EventResponse, int, error)
 	FindByID(ctx context.Context, id string) (*Event, error)
 }
 
@@ -20,7 +20,7 @@ func NewService(repo Repository) *EventService {
 	}
 }
 
-func (s *EventService) ListAll(ctx context.Context, filter ListFilter) ([]Event, int, error) {
+func (s *EventService) ListAll(ctx context.Context, filter ListFilterParams) ([]EventResponse, int, error) {
 	if err := filter.Validate(); err != nil {
 		return nil, 0, err
 	}
