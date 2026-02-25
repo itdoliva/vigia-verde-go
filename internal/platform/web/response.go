@@ -7,8 +7,8 @@ import (
 	"net/http"
 )
 
-type Response struct {
-	Data any             `json:"data"`
+type Response[T any] struct {
+	Data T               `json:"data"`
 	Meta *PaginationMeta `json:"meta,omitempty"`
 }
 
@@ -21,11 +21,11 @@ type PaginationMeta struct {
 	CurrentPage int `json:"current_page,omitempty"`
 }
 
-func Respond(w http.ResponseWriter, status int, data any, meta ...*PaginationMeta) {
+func Respond[T any](w http.ResponseWriter, status int, data T, meta ...*PaginationMeta) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 
-	res := Response{
+	res := Response[T]{
 		Data: data,
 	}
 
@@ -38,9 +38,6 @@ func Respond(w http.ResponseWriter, status int, data any, meta ...*PaginationMet
 
 }
 
-// No package web
-
-// Error representa um erro que sabe seu status HTTP e sua mensagem de resposta.
 type Error struct {
 	Err    error
 	Status int
@@ -50,19 +47,16 @@ func (e Error) Error() string {
 	return e.Err.Error()
 }
 
-// RespondError agora centraliza a lógica de log e resposta
 func RespondError(w http.ResponseWriter, r *http.Request, err error) {
 	status := http.StatusInternalServerError
 	message := "internal server error"
 
-	// Verifica se é um erro "conhecido" do nosso sistema
 	var webErr Error
 	if errors.As(err, &webErr) {
 		status = webErr.Status
 		message = webErr.Error()
 	}
 
-	// Log centralizado (ajuda a manter o console limpo e padronizado)
 	log.Printf("[ERROR] %s %s: %v", r.Method, r.URL.Path, err)
 
 	w.Header().Set("Content-Type", "application/json")
