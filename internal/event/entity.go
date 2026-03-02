@@ -16,8 +16,8 @@ var (
 )
 
 type GeoPoint struct {
-	Latitude  float64 `json:"latitude"`
-	Longitude float64 `json:"longitude"`
+	Latitude  float64 `json:"latitude" firestore:"latitude"`
+	Longitude float64 `json:"longitude" firestore:"longitude"`
 }
 
 func (p GeoPoint) Validate() error {
@@ -48,16 +48,18 @@ func (t EventType) Validate() error {
 }
 
 type CreateInput struct {
-	Location  GeoPoint
-	EventType EventType
-	Title     string
-	Author    Author
+	Location    GeoPoint
+	EventType   EventType
+	Title       string
+	Description string
+	ImageSrc    string
+	Author      Author
 }
 
 type Author struct {
-	AuthorID   string `json:"author_id"`
-	Name       string `json:"name"`
-	Subscribed bool   `json:"subscribed"`
+	AuthorID   string `json:"author_id" firestore:"author_id"`
+	Name       string `json:"name" firestore:"name"`
+	Subscribed bool   `json:"subscribed" firestore:"subscribed"`
 }
 
 type Event struct {
@@ -102,12 +104,16 @@ func New(in CreateInput) (*Event, error) {
 	}
 
 	return &Event{
-		Location:  in.Location,
-		EventType: in.EventType,
-		Title:     in.Title,
-		Author:    in.Author,
-		Upvotes:   0,
-		Downvotes: 0,
+		Location:     in.Location,
+		EventType:    in.EventType,
+		Title:        in.Title,
+		Description:  in.Description,
+		ImageSrc:     in.ImageSrc,
+		Author:       in.Author,
+		Upvotes:      0,
+		Downvotes:    0,
+		CommentCount: 0,
+		Comments:     []string{},
 	}, nil
 }
 

@@ -33,9 +33,11 @@ func (req CreateRequest) toInput() CreateInput {
 			Latitude:  req.Location.Latitude,
 			Longitude: req.Location.Longitude,
 		},
-		EventType: EventType(req.EventType),
-		Title:     req.Title,
-		Author:    req.Author,
+		EventType:   EventType(req.EventType),
+		Title:       req.Title,
+		Description: req.Description,
+		ImageSrc:    req.ImageSrc,
+		Author:      req.Author,
 	}
 }
 

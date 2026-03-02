@@ -56,13 +56,13 @@ func (r *EventRepository) Create(ctx context.Context, ev *Event) (string, error)
 type persistenceModel struct {
 	Location      GeoPoint  `firestore:"location"`
 	Geohash       string    `firestore:"geohash"`
-	GeohashTokens []string  `firestore:"geohashTokens"`
-	EventType     string    `firestore:"eventType"`
+	GeohashTokens []string  `firestore:"geohash_tokens"`
+	EventType     string    `firestore:"event_type"`
 	Title         string    `firestore:"title"`
 	Description   string    `firestore:"description"`
 	Comments      []string  `firestore:"comments"`
-	CommentCount  int       `firestore:"commentCount"`
-	ImageSrc      string    `firestore:"imageSrc"`
+	CommentCount  int       `firestore:"comment_count"`
+	ImageSrc      string    `firestore:"image_src"`
 	Author        Author    `firestore:"author"`
 	Upvotes       int       `firestore:"upvotes"`
 	Downvotes     int       `firestore:"downvotes"`
