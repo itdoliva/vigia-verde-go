@@ -54,6 +54,12 @@ type CreateInput struct {
 	AuthorID  string
 }
 
+type Author struct {
+	AuthorID   string `json:"author_id"`
+	Name       string `json:"name"`
+	Subscribed bool   `json:"subscribed"`
+}
+
 type Event struct {
 	ID        string    `json:"id"`
 	Location  GeoPoint  `json:"location"`
@@ -65,12 +71,16 @@ type Event struct {
 	Downvotes int       `json:"downvotes"`
 	CreatedAt time.Time `json:"created_at"`
 }
-type EventResponse struct {
-	ID        string    `json:"id"`
-	Location  GeoPoint  `json:"location"`
-	Geohash   string    `firestore:"geohash"`
-	EventType EventType `json:"event_type"`
-	CreatedAt time.Time `json:"created_at"`
+type ListEventResponse struct {
+	ID           string    `json:"id"`
+	Title        string    `json:"title"`
+	Author       Author    `json:"author"`
+	Location     GeoPoint  `json:"location"`
+	EventType    EventType `json:"event_type"`
+	CommentCount int       `json:"comment_count"`
+	Upvotes      int       `json:"upvotes"`
+	ImageSrc     string    `json:"image_src"`
+	CreatedAt    time.Time `json:"created_at"`
 }
 
 func New(in CreateInput) (*Event, error) {

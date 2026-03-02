@@ -11,7 +11,7 @@ import (
 
 type Service interface {
 	Create(ctx context.Context, input CreateInput) (string, error)
-	ListAll(ctx context.Context, filter ListFilterParams) ([]EventResponse, int, error)
+	ListAll(ctx context.Context, filter ListFilterParams) ([]ListEventResponse, int, error)
 	GetByID(ctx context.Context, id string) (*Event, error)
 }
 

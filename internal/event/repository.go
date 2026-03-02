@@ -62,7 +62,7 @@ type persistenceModel struct {
 	CreatedAt     time.Time `firestore:"createdAt,serverTimestamp"`
 }
 
-func (r *EventRepository) FindAll(ctx context.Context, filter ListFilterParams) ([]EventResponse, int, error) {
+func (r *EventRepository) FindAll(ctx context.Context, filter ListFilterParams) ([]ListEventResponse, int, error) {
 	collection := r.client.Collection("treeEvents")
 	q := collection.Query
 
@@ -114,17 +114,16 @@ func (r *EventRepository) FindAll(ctx context.Context, filter ListFilterParams) 
 		return nil, 0, err
 	}
 
-	events := make([]EventResponse, 0, len(docs))
+	events := make([]ListEventResponse, 0, len(docs))
 	for _, doc := range docs {
 		var p persistenceModel
 		if err := doc.DataTo(&p); err != nil {
 			return nil, 0, err
 		}
 
-		events = append(events, EventResponse{
+		events = append(events, ListEventResponse{
 			ID:        doc.Ref.ID,
 			Location:  p.Location,
-			Geohash:   p.Geohash,
 			EventType: EventType(p.EventType),
 			CreatedAt: p.CreatedAt,
 		})
