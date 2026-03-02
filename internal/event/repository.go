@@ -36,7 +36,11 @@ func (r *EventRepository) Create(ctx context.Context, ev *Event) (string, error)
 		GeohashTokens: tokens,
 		EventType:     string(ev.EventType),
 		Title:         ev.Title,
-		AuthorID:      ev.AuthorID,
+		Description:   ev.Description,
+		Comments:      ev.Comments,
+		CommentCount:  ev.CommentCount,
+		ImageSrc:      ev.ImageSrc,
+		Author:        ev.Author,
 		Upvotes:       ev.Upvotes,
 		Downvotes:     ev.Downvotes,
 	}
@@ -49,14 +53,17 @@ func (r *EventRepository) Create(ctx context.Context, ev *Event) (string, error)
 	return docRef.ID, nil
 }
 
-// Falta adicionar URL da imagem, comentarios e numero de comentarios
 type persistenceModel struct {
 	Location      GeoPoint  `firestore:"location"`
 	Geohash       string    `firestore:"geohash"`
 	GeohashTokens []string  `firestore:"geohashTokens"`
 	EventType     string    `firestore:"eventType"`
 	Title         string    `firestore:"title"`
-	AuthorID      string    `firestore:"authorId"`
+	Description   string    `firestore:"description"`
+	Comments      []string  `firestore:"comments"`
+	CommentCount  int       `firestore:"commentCount"`
+	ImageSrc      string    `firestore:"imageSrc"`
+	Author        Author    `firestore:"author"`
 	Upvotes       int       `firestore:"upvotes"`
 	Downvotes     int       `firestore:"downvotes"`
 	CreatedAt     time.Time `firestore:"createdAt,serverTimestamp"`
@@ -122,10 +129,15 @@ func (r *EventRepository) FindAll(ctx context.Context, filter ListFilterParams) 
 		}
 
 		events = append(events, ListEventResponse{
-			ID:        doc.Ref.ID,
-			Location:  p.Location,
-			EventType: EventType(p.EventType),
-			CreatedAt: p.CreatedAt,
+			ID:           doc.Ref.ID,
+			Title:        p.Title,
+			Author:       p.Author,
+			Location:     p.Location,
+			EventType:    EventType(p.EventType),
+			CommentCount: p.CommentCount,
+			Upvotes:      p.Upvotes,
+			ImageSrc:     p.ImageSrc,
+			CreatedAt:    p.CreatedAt,
 		})
 	}
 	return events, int(totalCount), nil
@@ -143,13 +155,18 @@ func (r *EventRepository) FindByID(ctx context.Context, id string) (*Event, erro
 	}
 
 	return &Event{
-		ID:        doc.Ref.ID,
-		Location:  p.Location,
-		EventType: EventType(p.EventType),
-		Title:     p.Title,
-		AuthorID:  p.AuthorID,
-		Upvotes:   p.Upvotes,
-		Downvotes: p.Downvotes,
-		CreatedAt: p.CreatedAt,
+		ID:           doc.Ref.ID,
+		Location:     p.Location,
+		Geohash:      p.Geohash,
+		EventType:    EventType(p.EventType),
+		Title:        p.Title,
+		Description:  p.Description,
+		Comments:     p.Comments,
+		CommentCount: p.CommentCount,
+		ImageSrc:     p.ImageSrc,
+		Author:       p.Author,
+		Upvotes:      p.Upvotes,
+		Downvotes:    p.Downvotes,
+		CreatedAt:    p.CreatedAt,
 	}, nil
 }

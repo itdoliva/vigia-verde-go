@@ -51,7 +51,7 @@ type CreateInput struct {
 	Location  GeoPoint
 	EventType EventType
 	Title     string
-	AuthorID  string
+	Author    Author
 }
 
 type Author struct {
@@ -61,15 +61,19 @@ type Author struct {
 }
 
 type Event struct {
-	ID        string    `json:"id"`
-	Location  GeoPoint  `json:"location"`
-	Geohash   string    `firestore:"geohash"`
-	EventType EventType `json:"event_type"`
-	Title     string    `json:"title"`
-	AuthorID  string    `json:"author_id"`
-	Upvotes   int       `json:"upvotes"`
-	Downvotes int       `json:"downvotes"`
-	CreatedAt time.Time `json:"created_at"`
+	ID           string    `json:"id"`
+	Location     GeoPoint  `json:"location"`
+	Geohash      string    `firestore:"geohash"`
+	EventType    EventType `json:"event_type"`
+	Title        string    `json:"title"`
+	Description  string    `json:"description"`
+	Comments     []string  `json:"comments"`
+	CommentCount int       `json:"comment_count"`
+	ImageSrc     string    `json:"image_src"`
+	Author       Author    `json:"author"`
+	Upvotes      int       `json:"upvotes"`
+	Downvotes    int       `json:"downvotes"`
+	CreatedAt    time.Time `json:"created_at"`
 }
 type ListEventResponse struct {
 	ID           string    `json:"id"`
@@ -93,12 +97,15 @@ func New(in CreateInput) (*Event, error) {
 	if err := in.EventType.Validate(); err != nil {
 		return nil, err
 	}
+	if in.Author.AuthorID == "" {
+		return nil, errors.New("author id is required")
+	}
 
 	return &Event{
 		Location:  in.Location,
 		EventType: in.EventType,
 		Title:     in.Title,
-		AuthorID:  in.AuthorID,
+		Author:    in.Author,
 		Upvotes:   0,
 		Downvotes: 0,
 	}, nil
