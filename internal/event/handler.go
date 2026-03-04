@@ -24,7 +24,7 @@ type CreateRequest struct {
 	Title       string `json:"title"`
 	Description string `json:"description"`
 	ImageSrc    string `json:"image_src"`
-	Author      Author `json:"author"`
+	AuthorID    string `json:"author_id"`
 }
 
 func (req CreateRequest) toInput() CreateInput {
@@ -37,7 +37,7 @@ func (req CreateRequest) toInput() CreateInput {
 		Title:       req.Title,
 		Description: req.Description,
 		ImageSrc:    req.ImageSrc,
-		Author:      req.Author,
+		AuthorID:    req.AuthorID,
 	}
 }
 

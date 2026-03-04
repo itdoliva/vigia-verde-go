@@ -33,14 +33,14 @@ func (p GeoPoint) Validate() error {
 type EventType string
 
 const (
-	EventCut      EventType = "cut"
+	EventRemoval  EventType = "removal"
 	EventPruning  EventType = "pruning"
-	EventPlanting EventType = "planting"
+	EventSeedling EventType = "seedling"
 )
 
 func (t EventType) Validate() error {
 	switch t {
-	case EventCut, EventPruning, EventPlanting:
+	case EventRemoval, EventPruning, EventSeedling:
 		return nil
 	default:
 		return ErrInvalidEventType
@@ -53,11 +53,11 @@ type CreateInput struct {
 	Title       string
 	Description string
 	ImageSrc    string
-	Author      Author
+	AuthorID    string
 }
 
 type Author struct {
-	AuthorID   string `json:"author_id" firestore:"author_id"`
+	ID         string `json:"id" firestore:"id"`
 	Name       string `json:"name" firestore:"name"`
 	Subscribed bool   `json:"subscribed" firestore:"subscribed"`
 }
@@ -99,17 +99,21 @@ func New(in CreateInput) (*Event, error) {
 	if err := in.EventType.Validate(); err != nil {
 		return nil, err
 	}
-	if in.Author.AuthorID == "" {
+	if in.AuthorID == "" {
 		return nil, errors.New("author id is required")
 	}
 
 	return &Event{
-		Location:     in.Location,
-		EventType:    in.EventType,
-		Title:        in.Title,
-		Description:  in.Description,
-		ImageSrc:     in.ImageSrc,
-		Author:       in.Author,
+		Location:    in.Location,
+		EventType:   in.EventType,
+		Title:       in.Title,
+		Description: in.Description,
+		ImageSrc:    in.ImageSrc,
+		Author: Author{
+			ID:         in.AuthorID,
+			Name:       "test",
+			Subscribed: true,
+		},
 		Upvotes:      0,
 		Downvotes:    0,
 		CommentCount: 0,
