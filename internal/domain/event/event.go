@@ -1,13 +1,21 @@
 package event
 
 import (
+	"context"
+	"errors"
 	"time"
 )
 
+type Repository interface {
+	Create(ctx context.Context, ev *Event) (string, error)
+	FindAll(ctx context.Context, filter ListFilterParams) ([]ListEventResponse, int, error)
+	FindByID(ctx context.Context, id string) (*Event, error)
+}
+
 type Author struct {
-	ID         string `json:"id" firestore:"id"`
-	Name       string `json:"name" firestore:"name"`
-	Subscribed bool   `json:"subscribed" firestore:"subscribed"`
+	ID         string `json:"id"`
+	Name       string `json:"name"`
+	Subscribed bool   `json:"subscribed"`
 }
 
 type EventType string
@@ -18,9 +26,18 @@ const (
 	EventSeedling EventType = "seedling"
 )
 
+func (t EventType) Validate() error {
+	switch t {
+	case EventRemoval, EventPruning, EventSeedling:
+		return nil
+	default:
+		return ErrInvalidEventType
+	}
+}
+
 type GeoPoint struct {
-	Latitude  *float64 `json:"latitude" firestore:"latitude"`
-	Longitude *float64 `json:"longitude" firestore:"longitude"`
+	Latitude  *float64 `json:"latitude"`
+	Longitude *float64 `json:"longitude"`
 }
 
 type Event struct {
@@ -38,21 +55,36 @@ type Event struct {
 	Downvotes    int       `json:"downvotes"`
 	CreatedAt    time.Time `json:"created_at"`
 }
-
-func (t EventType) Validate() error {
-	switch t {
-	case EventRemoval, EventPruning, EventSeedling:
-		return nil
-	default:
-		return ErrInvalidEventType
-	}
+type ListFilterParams struct {
+	Latitude  *float64 `json:"latitude"`
+	Longitude *float64 `json:"longitude"`
+	Precision *int     `json:"precision"`
+	AuthorID  string   `json:"author_id"`
+	EventType string   `json:"event_type"`
+	Page      int      `json:"page"`
+	Limit     int      `json:"limit"`
+}
+type ListEventResponse struct {
+	ID           string    `json:"id"`
+	Title        string    `json:"title"`
+	Author       Author    `json:"author"`
+	Location     GeoPoint  `json:"location"`
+	EventType    EventType `json:"event_type"`
+	CommentCount int       `json:"comment_count"`
+	Upvotes      int       `json:"upvotes"`
+	ImageSrc     string    `json:"image_src"`
+	CreatedAt    time.Time `json:"created_at"`
 }
 
-type EventDto struct {
-	Location    GeoPoint
-	EventType   EventType
-	Title       string
-	Description string
-	ImageSrc    string
-	AuthorID    string
+func (f *ListFilterParams) Validate() error {
+	if f.Latitude != nil || f.Longitude != nil {
+		if f.Precision == nil {
+			p := 6
+			f.Precision = &p
+		}
+		if *f.Precision < 5 || *f.Precision > 8 {
+			return errors.New("Invalid precision")
+		}
+	}
+	return nil
 }

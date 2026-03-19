@@ -1,8 +1,6 @@
 package appEvent
 
 import (
-	"errors"
-	"time"
 	"vigia-verde-go/internal/domain/event"
 
 	"github.com/go-playground/validator/v10"
@@ -23,41 +21,6 @@ type UpdateDTO struct {
 	Title       *string  `json:"title"`
 	Description *string  `json:"description"`
 	ImageSrc    *string  `json:"image_src"`
-}
-
-type ListFilterParams struct {
-	Latitude  *float64 `json:"latitude"`
-	Longitude *float64 `json:"longitude"`
-	Precision *int     `json:"precision"`
-	AuthorID  string   `json:"author_id"`
-	EventType string   `json:"event_type"`
-	Page      int      `json:"page"`
-	Limit     int      `json:"limit"`
-}
-
-func (f *ListFilterParams) Validate() error {
-	if f.Latitude != nil || f.Longitude != nil {
-		if f.Precision == nil {
-			p := 6
-			f.Precision = &p
-		}
-		if *f.Precision < 5 || *f.Precision > 8 {
-			return errors.New("Invalid precision")
-		}
-	}
-	return nil
-}
-
-type ListEventResponse struct {
-	ID           string          `json:"id"`
-	Title        string          `json:"title"`
-	Author       event.Author    `json:"author"`
-	Location     event.GeoPoint  `json:"location"`
-	EventType    event.EventType `json:"event_type"`
-	CommentCount int             `json:"comment_count"`
-	Upvotes      int             `json:"upvotes"`
-	ImageSrc     string          `json:"image_src"`
-	CreatedAt    time.Time       `json:"created_at"`
 }
 
 func New(in CreateDTO) (*event.Event, error) {

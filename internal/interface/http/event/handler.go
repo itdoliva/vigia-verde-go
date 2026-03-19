@@ -14,7 +14,7 @@ import (
 
 type Service interface {
 	Create(ctx context.Context, input appEvent.CreateDTO) (string, error)
-	ListAll(ctx context.Context, filter appEvent.ListFilterParams) ([]appEvent.ListEventResponse, int, error)
+	ListAll(ctx context.Context, filter event.ListFilterParams) ([]event.ListEventResponse, int, error)
 	GetByID(ctx context.Context, id string) (*event.Event, error)
 }
 
@@ -71,7 +71,7 @@ func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	filter := appEvent.ListFilterParams{
+	filter := event.ListFilterParams{
 		AuthorID:  query.Get("author_id"),
 		EventType: query.Get("event_type"),
 		Page:      page,

@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"time"
-	appEvent "vigia-verde-go/internal/application/event"
 	"vigia-verde-go/internal/domain/event"
 
 	"cloud.google.com/go/firestore"
@@ -71,7 +70,7 @@ type persistenceModel struct {
 	CreatedAt     time.Time      `firestore:"createdAt,serverTimestamp"`
 }
 
-func (r *EventRepository) FindAll(ctx context.Context, filter appEvent.ListFilterParams) ([]appEvent.ListEventResponse, int, error) {
+func (r *EventRepository) FindAll(ctx context.Context, filter event.ListFilterParams) ([]event.ListEventResponse, int, error) {
 	collection := r.client.Collection("treeEvents")
 	q := collection.Query
 
@@ -123,14 +122,14 @@ func (r *EventRepository) FindAll(ctx context.Context, filter appEvent.ListFilte
 		return nil, 0, err
 	}
 
-	events := make([]appEvent.ListEventResponse, 0, len(docs))
+	events := make([]event.ListEventResponse, 0, len(docs))
 	for _, doc := range docs {
 		var p persistenceModel
 		if err := doc.DataTo(&p); err != nil {
 			return nil, 0, err
 		}
 
-		events = append(events, appEvent.ListEventResponse{
+		events = append(events, event.ListEventResponse{
 			ID:           doc.Ref.ID,
 			Title:        p.Title,
 			Author:       p.Author,
