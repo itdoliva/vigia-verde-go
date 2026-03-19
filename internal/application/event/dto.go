@@ -2,6 +2,7 @@ package appEvent
 
 import (
 	"errors"
+	"time"
 	"vigia-verde-go/internal/domain/event"
 
 	"github.com/go-playground/validator/v10"
@@ -24,7 +25,7 @@ type UpdateDTO struct {
 	ImageSrc    *string  `json:"image_src"`
 }
 
-type listFilterParams struct {
+type ListFilterParams struct {
 	Latitude  *float64 `json:"latitude"`
 	Longitude *float64 `json:"longitude"`
 	Precision *int     `json:"precision"`
@@ -34,7 +35,7 @@ type listFilterParams struct {
 	Limit     int      `json:"limit"`
 }
 
-func (f *listFilterParams) Validate() error {
+func (f *ListFilterParams) Validate() error {
 	if f.Latitude != nil || f.Longitude != nil {
 		if f.Precision == nil {
 			p := 6
@@ -45,6 +46,18 @@ func (f *listFilterParams) Validate() error {
 		}
 	}
 	return nil
+}
+
+type ListEventResponse struct {
+	ID           string          `json:"id"`
+	Title        string          `json:"title"`
+	Author       event.Author    `json:"author"`
+	Location     event.GeoPoint  `json:"location"`
+	EventType    event.EventType `json:"event_type"`
+	CommentCount int             `json:"comment_count"`
+	Upvotes      int             `json:"upvotes"`
+	ImageSrc     string          `json:"image_src"`
+	CreatedAt    time.Time       `json:"created_at"`
 }
 
 func New(in CreateDTO) (*event.Event, error) {
