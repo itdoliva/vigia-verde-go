@@ -32,8 +32,8 @@ func (s *EventService) GetByID(ctx context.Context, id string) (*event.Event, er
 	return s.repo.FindByID(ctx, id)
 }
 
-func (s *EventService) Create(ctx context.Context, input event.EventDto) (string, error) {
-	ev, err := event.New(input)
+func (s *EventService) Create(ctx context.Context, input CreateDTO) (string, error) {
+	ev, err := New(input)
 	if err != nil {
 		return "", err
 	}

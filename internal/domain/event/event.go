@@ -39,22 +39,6 @@ type Event struct {
 	CreatedAt    time.Time `json:"created_at"`
 }
 
-func (p GeoPoint) Validate() error {
-	if p.Latitude == nil || p.Longitude == nil {
-		return ErrInvalidGeoPoint
-	}
-
-	lat, lng := *p.Latitude, *p.Longitude
-
-	if lat < -90 || lat > 90 {
-		return ErrInvalidGeoPoint
-	}
-	if lng < -180 || lng > 180 {
-		return ErrInvalidGeoPoint
-	}
-	return nil
-}
-
 func (t EventType) Validate() error {
 	switch t {
 	case EventRemoval, EventPruning, EventSeedling:
@@ -62,38 +46,6 @@ func (t EventType) Validate() error {
 	default:
 		return ErrInvalidEventType
 	}
-}
-
-func New(in EventDto) (*Event, error) {
-	if in.Title == "" {
-		return nil, ErrInvalidTitle
-	}
-	if err := in.Location.Validate(); err != nil {
-		return nil, err
-	}
-	if err := in.EventType.Validate(); err != nil {
-		return nil, err
-	}
-	if in.AuthorID == "" {
-		return nil, ErrInvalidID
-	}
-
-	return &Event{
-		Location:    in.Location,
-		EventType:   in.EventType,
-		Title:       in.Title,
-		Description: in.Description,
-		ImageSrc:    in.ImageSrc,
-		Author: Author{
-			ID:         in.AuthorID,
-			Name:       "test",
-			Subscribed: true,
-		},
-		Upvotes:      0,
-		Downvotes:    0,
-		CommentCount: 0,
-		Comments:     []string{},
-	}, nil
 }
 
 type EventDto struct {

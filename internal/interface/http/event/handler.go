@@ -13,7 +13,7 @@ import (
 )
 
 type Service interface {
-	Create(ctx context.Context, input event.EventDto) (string, error)
+	Create(ctx context.Context, input appEvent.CreateDTO) (string, error)
 	ListAll(ctx context.Context, filter event.ListFilterParams) ([]event.ListEventResponse, int, error)
 	GetByID(ctx context.Context, id string) (*event.Event, error)
 }
@@ -28,20 +28,6 @@ type CreateRequest struct {
 	Description string `json:"description"`
 	ImageSrc    string `json:"image_src"`
 	AuthorID    string `json:"author_id"`
-}
-
-func (req CreateRequest) toInput() event.EventDto {
-	return event.EventDto{
-		Location: event.GeoPoint{
-			Latitude:  req.Location.Latitude,
-			Longitude: req.Location.Longitude,
-		},
-		EventType:   event.EventType(req.EventType),
-		Title:       req.Title,
-		Description: req.Description,
-		ImageSrc:    req.ImageSrc,
-		AuthorID:    req.AuthorID,
-	}
 }
 
 type Handler struct {
@@ -59,13 +45,13 @@ func (h *Handler) RegisterRoutes(mux *http.ServeMux) {
 }
 
 func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
-	var req CreateRequest
+	var req appEvent.CreateDTO
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "invalid json", http.StatusBadRequest)
 		return
 	}
 
-	id, err := h.service.Create(r.Context(), req.toInput())
+	id, err := h.service.Create(r.Context(), req)
 	if err != nil {
 		h.handleError(w, r, err)
 		return
