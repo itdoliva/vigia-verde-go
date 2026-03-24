@@ -7,6 +7,7 @@ import (
 	"os"
 	"vigia-verde-go/internal/infrastructure/firebase"
 	handlerEvent "vigia-verde-go/internal/interface/http/event"
+	handlerUser "vigia-verde-go/internal/interface/http/user"
 	config "vigia-verde-go/internal/shared"
 )
 
@@ -22,8 +23,11 @@ func main() {
 
 	mux := http.NewServeMux()
 
-	eventHandler := handlerEvent.SetupModule(fsClient)
+	eventHandler := handlerEvent.SetupEvent(fsClient)
 	eventHandler.RegisterRoutes(mux)
+
+	userHandler := handlerUser.SetupUser(fsClient)
+	userHandler.RegisterRoutes(mux)
 
 	port := os.Getenv("PORT")
 	if port == "" {

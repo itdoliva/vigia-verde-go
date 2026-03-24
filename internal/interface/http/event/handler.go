@@ -6,7 +6,7 @@ import (
 	"net/http"
 	appEvent "vigia-verde-go/internal/application/event"
 	"vigia-verde-go/internal/domain/event"
-	repoEvent "vigia-verde-go/internal/infrastructure/repository"
+	repoEvent "vigia-verde-go/internal/infrastructure/repository/event"
 	web "vigia-verde-go/internal/infrastructure/utils"
 
 	"cloud.google.com/go/firestore"
@@ -16,18 +16,6 @@ type Service interface {
 	Create(ctx context.Context, input appEvent.CreateDTO) (string, error)
 	ListAll(ctx context.Context, filter event.ListFilterParams) ([]event.ListEventResponse, int, error)
 	GetByID(ctx context.Context, id string) (*event.Event, error)
-}
-
-type CreateRequest struct {
-	Location struct {
-		Latitude  *float64 `json:"latitude"`
-		Longitude *float64 `json:"longitude"`
-	} `json:"location"`
-	EventType   string `json:"event_type"`
-	Title       string `json:"title"`
-	Description string `json:"description"`
-	ImageSrc    string `json:"image_src"`
-	AuthorID    string `json:"author_id"`
 }
 
 type Handler struct {
@@ -107,7 +95,7 @@ func (h *Handler) handleError(w http.ResponseWriter, r *http.Request, err error)
 	web.RespondError(w, r, err)
 }
 
-func SetupModule(db *firestore.Client) *Handler {
+func SetupEvent(db *firestore.Client) *Handler {
 	repo := repoEvent.NewRepository(db)
 	service := appEvent.NewService(repo)
 	return NewHandler(service)

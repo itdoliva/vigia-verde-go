@@ -39,7 +39,6 @@ func Respond[T any](w http.ResponseWriter, status int, data T, meta ...*Paginati
 
 }
 
-// domainErrors mapeia erros de domínio para HTTP status + mensagem pública.
 var domainErrors = map[error]struct {
 	Status  int
 	Message string

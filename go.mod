@@ -6,6 +6,7 @@ require (
 	cloud.google.com/go/firestore v1.20.0
 	github.com/go-playground/validator/v10 v10.30.1
 	github.com/mmcloughlin/geohash v0.10.0
+	golang.org/x/crypto v0.49.0
 )
 
 require (
@@ -32,7 +33,6 @@ require (
 	go.opentelemetry.io/otel v1.38.0 // indirect
 	go.opentelemetry.io/otel/metric v1.38.0 // indirect
 	go.opentelemetry.io/otel/trace v1.38.0 // indirect
-	golang.org/x/crypto v0.49.0 // indirect
 	golang.org/x/net v0.51.0 // indirect
 	golang.org/x/oauth2 v0.34.0 // indirect
 	golang.org/x/sync v0.20.0 // indirect
