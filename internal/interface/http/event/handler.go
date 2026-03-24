@@ -1,44 +1,33 @@
-package event
+package handlerEvent
 
 import (
 	"context"
 	"encoding/json"
 	"net/http"
-	"vigia-verde-go/internal/platform/web"
+	appEvent "vigia-verde-go/internal/application/event"
+	"vigia-verde-go/internal/domain/event"
+	repoEvent "vigia-verde-go/internal/infrastructure/repository"
+	web "vigia-verde-go/internal/infrastructure/utils"
 
 	"cloud.google.com/go/firestore"
 )
 
 type Service interface {
-	Create(ctx context.Context, input CreateInput) (string, error)
-	ListAll(ctx context.Context, filter ListFilterParams) ([]ListEventResponse, int, error)
-	GetByID(ctx context.Context, id string) (*Event, error)
+	Create(ctx context.Context, input appEvent.CreateDTO) (string, error)
+	ListAll(ctx context.Context, filter event.ListFilterParams) ([]event.ListEventResponse, int, error)
+	GetByID(ctx context.Context, id string) (*event.Event, error)
 }
 
 type CreateRequest struct {
 	Location struct {
-		Latitude  float64 `json:"latitude"`
-		Longitude float64 `json:"longitude"`
+		Latitude  *float64 `json:"latitude"`
+		Longitude *float64 `json:"longitude"`
 	} `json:"location"`
 	EventType   string `json:"event_type"`
 	Title       string `json:"title"`
 	Description string `json:"description"`
 	ImageSrc    string `json:"image_src"`
 	AuthorID    string `json:"author_id"`
-}
-
-func (req CreateRequest) toInput() CreateInput {
-	return CreateInput{
-		Location: GeoPoint{
-			Latitude:  req.Location.Latitude,
-			Longitude: req.Location.Longitude,
-		},
-		EventType:   EventType(req.EventType),
-		Title:       req.Title,
-		Description: req.Description,
-		ImageSrc:    req.ImageSrc,
-		AuthorID:    req.AuthorID,
-	}
 }
 
 type Handler struct {
@@ -56,13 +45,13 @@ func (h *Handler) RegisterRoutes(mux *http.ServeMux) {
 }
 
 func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
-	var req CreateRequest
+	var req appEvent.CreateDTO
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "invalid json", http.StatusBadRequest)
 		return
 	}
 
-	id, err := h.service.Create(r.Context(), req.toInput())
+	id, err := h.service.Create(r.Context(), req)
 	if err != nil {
 		h.handleError(w, r, err)
 		return
@@ -82,7 +71,7 @@ func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	filter := ListFilterParams{
+	filter := event.ListFilterParams{
 		AuthorID:  query.Get("author_id"),
 		EventType: query.Get("event_type"),
 		Page:      page,
@@ -119,7 +108,7 @@ func (h *Handler) handleError(w http.ResponseWriter, r *http.Request, err error)
 }
 
 func SetupModule(db *firestore.Client) *Handler {
-	repo := NewRepository(db)
-	service := NewService(repo)
+	repo := repoEvent.NewRepository(db)
+	service := appEvent.NewService(repo)
 	return NewHandler(service)
 }

@@ -1,10 +1,11 @@
-package event
+package repoEvent
 
 import (
 	"context"
 	"errors"
 	"fmt"
 	"time"
+	"vigia-verde-go/internal/domain/event"
 
 	"cloud.google.com/go/firestore"
 	"cloud.google.com/go/firestore/apiv1/firestorepb"
@@ -19,10 +20,10 @@ func NewRepository(client *firestore.Client) *EventRepository {
 	return &EventRepository{client: client}
 }
 
-func (r *EventRepository) Create(ctx context.Context, ev *Event) (string, error) {
+func (r *EventRepository) Create(ctx context.Context, ev *event.Event) (string, error) {
 	collection := r.client.Collection("treeEvents")
 	docRef := collection.NewDoc()
-	hash := geohash.Encode(ev.Location.Latitude, ev.Location.Longitude)
+	hash := geohash.Encode(*ev.Location.Latitude, *ev.Location.Longitude)
 	tokens := []string{
 		hash[:5],
 		hash[:6],
@@ -54,22 +55,22 @@ func (r *EventRepository) Create(ctx context.Context, ev *Event) (string, error)
 }
 
 type persistenceModel struct {
-	Location      GeoPoint  `firestore:"location"`
-	Geohash       string    `firestore:"geohash"`
-	GeohashTokens []string  `firestore:"geohash_tokens"`
-	EventType     string    `firestore:"event_type"`
-	Title         string    `firestore:"title"`
-	Description   string    `firestore:"description"`
-	Comments      []string  `firestore:"comments"`
-	CommentCount  int       `firestore:"comment_count"`
-	ImageSrc      string    `firestore:"image_src"`
-	Author        Author    `firestore:"author"`
-	Upvotes       int       `firestore:"upvotes"`
-	Downvotes     int       `firestore:"downvotes"`
-	CreatedAt     time.Time `firestore:"createdAt,serverTimestamp"`
+	Location      event.GeoPoint `firestore:"location"`
+	Geohash       string         `firestore:"geohash"`
+	GeohashTokens []string       `firestore:"geohash_tokens"`
+	EventType     string         `firestore:"event_type"`
+	Title         string         `firestore:"title"`
+	Description   string         `firestore:"description"`
+	Comments      []string       `firestore:"comments"`
+	CommentCount  int            `firestore:"comment_count"`
+	ImageSrc      string         `firestore:"image_src"`
+	Author        event.Author   `firestore:"author"`
+	Upvotes       int            `firestore:"upvotes"`
+	Downvotes     int            `firestore:"downvotes"`
+	CreatedAt     time.Time      `firestore:"createdAt,serverTimestamp"`
 }
 
-func (r *EventRepository) FindAll(ctx context.Context, filter ListFilterParams) ([]ListEventResponse, int, error) {
+func (r *EventRepository) FindAll(ctx context.Context, filter event.ListFilterParams) ([]event.ListEventResponse, int, error) {
 	collection := r.client.Collection("treeEvents")
 	q := collection.Query
 
@@ -121,19 +122,19 @@ func (r *EventRepository) FindAll(ctx context.Context, filter ListFilterParams) 
 		return nil, 0, err
 	}
 
-	events := make([]ListEventResponse, 0, len(docs))
+	events := make([]event.ListEventResponse, 0, len(docs))
 	for _, doc := range docs {
 		var p persistenceModel
 		if err := doc.DataTo(&p); err != nil {
 			return nil, 0, err
 		}
 
-		events = append(events, ListEventResponse{
+		events = append(events, event.ListEventResponse{
 			ID:           doc.Ref.ID,
 			Title:        p.Title,
 			Author:       p.Author,
 			Location:     p.Location,
-			EventType:    EventType(p.EventType),
+			EventType:    event.EventType(p.EventType),
 			CommentCount: p.CommentCount,
 			Upvotes:      p.Upvotes,
 			ImageSrc:     p.ImageSrc,
@@ -143,7 +144,7 @@ func (r *EventRepository) FindAll(ctx context.Context, filter ListFilterParams) 
 	return events, int(totalCount), nil
 }
 
-func (r *EventRepository) FindByID(ctx context.Context, id string) (*Event, error) {
+func (r *EventRepository) FindByID(ctx context.Context, id string) (*event.Event, error) {
 	doc, err := r.client.Collection("treeEvents").Doc(id).Get(ctx)
 	if err != nil {
 		return nil, err
@@ -154,11 +155,11 @@ func (r *EventRepository) FindByID(ctx context.Context, id string) (*Event, erro
 		return nil, err
 	}
 
-	return &Event{
+	return &event.Event{
 		ID:           doc.Ref.ID,
 		Location:     p.Location,
 		Geohash:      p.Geohash,
-		EventType:    EventType(p.EventType),
+		EventType:    event.EventType(p.EventType),
 		Title:        p.Title,
 		Description:  p.Description,
 		Comments:     p.Comments,
