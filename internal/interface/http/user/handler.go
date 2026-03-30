@@ -17,7 +17,6 @@ type UserService interface {
 	GetByEmail(ctx context.Context, email string) (*User.User, error)
 	GetById(ctx context.Context, id string) (*User.User, error)
 	GetByPhone(ctx context.Context, phone string) (*User.User, error)
-	Login(ctx context.Context, lr appUser.LoginReq) (string, error)
 }
 
 type UserHandler struct {
@@ -31,13 +30,12 @@ func NewHandler(s UserService) *UserHandler {
 }
 
 func (h *UserHandler) RegisterRoutes(mux *http.ServeMux) {
-	mux.HandleFunc("POST /register", h.Register)
+	mux.HandleFunc("POST /save", h.Save)
 	mux.HandleFunc("GET /getEmail/{email}", h.GetByEmail)
 	mux.HandleFunc("GET /getId/{id}", h.GetById)
 	mux.HandleFunc("GET /getPhone/{phone}", h.GetByPhone)
-	mux.HandleFunc("POST /login", h.Login)
 }
-func (h *UserHandler) Register(w http.ResponseWriter, r *http.Request) {
+func (h *UserHandler) Save(w http.ResponseWriter, r *http.Request) {
 	var dto appUser.RegisterReq
 	if err := json.NewDecoder(r.Body).Decode(&dto); err != nil {
 		http.Error(w, "invalid json", http.StatusBadRequest)
@@ -76,22 +74,6 @@ func (h *UserHandler) GetByPhone(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	web.Respond(w, http.StatusOK, user)
-}
-
-func (h *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
-	var dto appUser.LoginReq
-	if err := json.NewDecoder(r.Body).Decode(&dto); err != nil {
-		http.Error(w, "invalid json", http.StatusBadRequest)
-		return
-	}
-
-	texto, err := h.service.Login(r.Context(), dto)
-	if err != nil {
-		h.handleError(w, r, err)
-		return
-	}
-	web.Respond(w, http.StatusOK, texto)
-
 }
 
 func (h *UserHandler) handleError(w http.ResponseWriter, r *http.Request, err error) {

@@ -1,2 +1,8 @@
 .env
 /keys
+firestore-debug.log
+.firebaserc
+firebase-debug.log
+firebase.json
+*.txt
+projeto_completo.txt

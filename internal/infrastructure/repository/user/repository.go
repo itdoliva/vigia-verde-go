@@ -16,12 +16,11 @@ func NewRepository(client *firestore.Client) User.Repository {
 	return &UserRepository{client: client}
 }
 
-func (r *UserRepository) Register(ctx context.Context, User *User.User) error {
-	docref := r.client.Collection("treeUser").NewDoc()
-	User.Id = docref.ID
+func (r *UserRepository) Save(ctx context.Context, User *User.User) error {
+	docRef := r.client.Collection("treeUser").Doc(User.Id)
 
-	if _, err := docref.Set(ctx, User); err != nil {
-		return fmt.Errorf("Falha ao persistir: %v", err)
+	if _, err := docRef.Set(ctx, User); err != nil {
+		return fmt.Errorf("falha ao persistir usuário no Firestore: %v", err)
 	}
 
 	return nil
