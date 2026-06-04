@@ -1,0 +1,313 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "title": "Vigia Verde API Docs",
+        "contact": {
+            "name": "Arthur de Oliveira \u0026 Italo de Oliveira"
+        },
+        "license": {
+            "name": "Apache 2.0",
+            "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
+        },
+        "version": "0.1.0"
+    },
+    "host": "https://vigia-verde-514678222430.southamerica-east1.run.app",
+    "basePath": "/",
+    "paths": {
+        "/events": {
+            "get": {
+                "description": "Retorna uma lista de eventos com suporte a paginação, filtros por autor/tipo e busca geoespacial por coordenadas.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Eventos"
+                ],
+                "summary": "Listar eventos",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Filtrar por ID do autor",
+                        "name": "author_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filtrar por tipo de evento",
+                        "name": "event_type",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Número da página (padrão capturado por web.GetPagination)",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Limite de itens por página",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "number",
+                        "description": "Latitude para busca geoespacial",
+                        "name": "lat",
+                        "in": "query"
+                    },
+                    {
+                        "type": "number",
+                        "description": "Longitude para busca geoespacial",
+                        "name": "lng",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Precisão da busca (capturado por web.GetPrecision)",
+                        "name": "precision",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Nota: O web.Respond envia a lista e o meta de paginação",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/vigia-verde-go_internal_domain_event.Event"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Erro nos parâmetros enviados",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Registra um novo evento a partir dos dados fornecidos no corpo da requisição.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Eventos"
+                ],
+                "summary": "Criar um evento",
+                "parameters": [
+                    {
+                        "description": "Dados para criação do evento",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/vigia-verde-go_internal_application_event.CreateDTO"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Exemplo: {\"id\": \"123\"}",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "invalid json",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Erro interno tratado",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/events/{id}": {
+            "get": {
+                "description": "Retorna os detalhes completos de um único evento baseado no parâmetro de URL {id}.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Eventos"
+                ],
+                "summary": "Buscar um evento por ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID do Evento",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/vigia-verde-go_internal_domain_event.Event"
+                        }
+                    },
+                    "404": {
+                        "description": "Evento não encontrado",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "vigia-verde-go_internal_application_event.CreateDTO": {
+            "type": "object",
+            "required": [
+                "event_type",
+                "latitude",
+                "longitude",
+                "title"
+            ],
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "event_type": {
+                    "type": "string"
+                },
+                "image_src": {
+                    "type": "string"
+                },
+                "latitude": {
+                    "type": "number"
+                },
+                "longitude": {
+                    "type": "number"
+                },
+                "title": {
+                    "type": "string"
+                }
+            }
+        },
+        "vigia-verde-go_internal_domain_event.Author": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "subscribed": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "vigia-verde-go_internal_domain_event.Event": {
+            "type": "object",
+            "properties": {
+                "author": {
+                    "$ref": "#/definitions/vigia-verde-go_internal_domain_event.Author"
+                },
+                "comment_count": {
+                    "type": "integer"
+                },
+                "comments": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "downvotes": {
+                    "type": "integer"
+                },
+                "event_type": {
+                    "$ref": "#/definitions/vigia-verde-go_internal_domain_event.EventType"
+                },
+                "geohash": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "image_src": {
+                    "type": "string"
+                },
+                "location": {
+                    "$ref": "#/definitions/vigia-verde-go_internal_domain_event.GeoPoint"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "upvotes": {
+                    "type": "integer"
+                }
+            }
+        },
+        "vigia-verde-go_internal_domain_event.EventType": {
+            "type": "string",
+            "enum": [
+                "removal",
+                "pruning",
+                "seedling"
+            ],
+            "x-enum-varnames": [
+                "EventRemoval",
+                "EventPruning",
+                "EventSeedling"
+            ]
+        },
+        "vigia-verde-go_internal_domain_event.GeoPoint": {
+            "type": "object",
+            "properties": {
+                "latitude": {
+                    "type": "number"
+                },
+                "longitude": {
+                    "type": "number"
+                }
+            }
+        }
+    }
+}

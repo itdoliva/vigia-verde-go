@@ -5,11 +5,21 @@ import (
 	"log"
 	"net/http"
 	"os"
+	_ "vigia-verde-go/cmd/api/docs"
 	"vigia-verde-go/internal/infrastructure/firebase"
-	handlerEvent "vigia-verde-go/internal/interface/http/event"
+	eventModule "vigia-verde-go/internal/interface/http/event"
 	config "vigia-verde-go/internal/shared"
+
+	httpSwagger "github.com/swaggo/http-swagger"
 )
 
+// @title Vigia Verde API Docs
+// @version 0.1.0
+// @contact.name Arthur de Oliveira & Italo de Oliveira
+// @license.name Apache 2.0
+// @license.url http://www.apache.org/licenses/LICENSE-2.0.html
+// @host https://vigia-verde-514678222430.southamerica-east1.run.app
+// @BasePath /
 func main() {
 	config.LoadEnv(".env")
 
@@ -22,7 +32,9 @@ func main() {
 
 	mux := http.NewServeMux()
 
-	eventHandler := handlerEvent.SetupModule(fsClient)
+	mux.Handle("/docs/", httpSwagger.WrapHandler)
+
+	eventHandler := eventModule.SetupModule(fsClient)
 	eventHandler.RegisterRoutes(mux)
 
 	port := os.Getenv("PORT")
