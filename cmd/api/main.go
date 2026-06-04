@@ -18,7 +18,7 @@ import (
 // @contact.name Arthur de Oliveira & Italo de Oliveira
 // @license.name Apache 2.0
 // @license.url http://www.apache.org/licenses/LICENSE-2.0.html
-// @host https://vigia-verde-514678222430.southamerica-east1.run.app
+// @host vigia-verde-514678222430.southamerica-east1.run.app
 // @BasePath /
 func main() {
 	config.LoadEnv(".env")
