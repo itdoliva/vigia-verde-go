@@ -44,6 +44,17 @@ func (h *Handler) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /events/{id}", h.Get)
 }
 
+// Create cria um novo evento
+// @Summary      Criar um evento
+// @Description  Registra um novo evento a partir dos dados fornecidos no corpo da requisição.
+// @Tags         Eventos
+// @Accept       json
+// @Produce      json
+// @Param        request   body      appEvent.CreateDTO  true  "Dados para criação do evento"
+// @Success      201       {object}  map[string]string   "Exemplo: {"id": "123"}"
+// @Failure      400       {string}  string              "invalid json"
+// @Failure      500       {object}  map[string]string   "Erro interno tratado"
+// @Router       /events [post]
 func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	var req appEvent.CreateDTO
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -60,6 +71,22 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	web.Respond(w, http.StatusCreated, map[string]string{"id": id})
 }
 
+// List retorna todos os eventos filtrados e paginados
+// @Summary      Listar eventos
+// @Description  Retorna uma lista de eventos com suporte a paginação, filtros por autor/tipo e busca geoespacial por coordenadas.
+// @Tags         Eventos
+// @Produce      json
+// @Param        author_id   query     string  false  "Filtrar por ID do autor"
+// @Param        event_type  query     string  false  "Filtrar por tipo de evento"
+// @Param        page        query     int     false  "Número da página (padrão capturado por web.GetPagination)"
+// @Param        limit       query     int     false  "Limite de itens por página"
+// @Param        lat         query     number  false  "Latitude para busca geoespacial"
+// @Param        lng         query     number  false  "Longitude para busca geoespacial"
+// @Param        precision   query     string  false  "Precisão da busca (capturado por web.GetPrecision)"
+// @Success      200         {array}   event.Event "Nota: O web.Respond envia a lista e o meta de paginação"
+// @Failure      400         {string}  string      "Erro nos parâmetros enviados"
+// @Failure      500         {object}  map[string]string
+// @Router       /events [get]
 func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Query()
 
@@ -91,6 +118,16 @@ func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 	web.Respond(w, http.StatusOK, events, meta)
 }
 
+// Get retorna um evento específico pelo ID
+// @Summary      Buscar um evento por ID
+// @Description  Retorna os detalhes completos de um único evento baseado no parâmetro de URL {id}.
+// @Tags         Eventos
+// @Produce      json
+// @Param        id        path      string  true  "ID do Evento"
+// @Success      200       {object}  event.Event
+// @Failure      404       {object}  map[string]string "Evento não encontrado"
+// @Failure      500       {object}  map[string]string
+// @Router       /events/{id} [get]
 func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
 
